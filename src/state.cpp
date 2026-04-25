@@ -49,3 +49,22 @@ void setup_state(){
 
     return;
 }
+
+bool ready_for_state_update(){
+    return pollFlag;
+}
+
+void update_state(int row_idx){
+    // set prev state equal to cur state
+    for (int i = 0; i < 8; i++){
+        for (int j = 0; j < 8; j++){
+            GameState.past_state[i][j] = GameState.cur_state[i][j];
+        }
+    }
+    float volts[8];
+    get_hall_volt(row_idx);
+    for (int j = 0; j < 8; j++){
+        GameState.cur_state[row_idx][j] = get_chess_piece_type(volts[j]);
+    }
+    return;
+}

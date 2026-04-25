@@ -98,6 +98,58 @@ void get_hall_volt(int row_idx, float row_volts[8]){
         digitalWrite(ENABLE4, LOW);
         return;
     }
+    // else if (row_idx == 4){
+    //     digitalWrite(ENABLE5, HIGH);
+    //     int hall1 = analogRead(HALL_PIN1);
+    //     int hall2 = analogRead(HALL_PIN2);
+    //     int hall3 = analogRead(HALL_PIN3);
+    //     int hall4 = analogRead(HALL_PIN4);
+    //     row_volts[0] = hall1/4095.0 * 3.3;
+    //     row_volts[1] = hall2/4095.0 * 3.3;
+    //     row_volts[2] = hall3/4095.0 * 3.3;
+    //     row_volts[3] = hall4/4095.0 * 3.3;
+    //     digitalWrite(ENABLE5, LOW);
+    //     return;
+    // }
+    // else if (row_idx == 5){
+    //     digitalWrite(ENABLE6, HIGH);
+    //     int hall1 = analogRead(HALL_PIN1);
+    //     int hall2 = analogRead(HALL_PIN2);
+    //     int hall3 = analogRead(HALL_PIN3);
+    //     int hall4 = analogRead(HALL_PIN4);
+    //     row_volts[0] = hall1/4095.0 * 3.3;
+    //     row_volts[1] = hall2/4095.0 * 3.3;
+    //     row_volts[2] = hall3/4095.0 * 3.3;
+    //     row_volts[3] = hall4/4095.0 * 3.3;
+    //     digitalWrite(ENABLE6, LOW);
+    //     return;
+    // }
+    // else if (row_idx == 6){
+    //     digitalWrite(ENABLE7, HIGH);
+    //     int hall1 = analogRead(HALL_PIN1);
+    //     int hall2 = analogRead(HALL_PIN2);
+    //     int hall3 = analogRead(HALL_PIN3);
+    //     int hall4 = analogRead(HALL_PIN4);
+    //     row_volts[0] = hall1/4095.0 * 3.3;
+    //     row_volts[1] = hall2/4095.0 * 3.3;
+    //     row_volts[2] = hall3/4095.0 * 3.3;
+    //     row_volts[3] = hall4/4095.0 * 3.3;
+    //     digitalWrite(ENABLE7, LOW);
+    //     return;
+    // }
+    // else if (row_idx == 7){
+    //     digitalWrite(ENABLE8, HIGH);
+    //     int hall1 = analogRead(HALL_PIN1);
+    //     int hall2 = analogRead(HALL_PIN2);
+    //     int hall3 = analogRead(HALL_PIN3);
+    //     int hall4 = analogRead(HALL_PIN4);
+    //     row_volts[0] = hall1/4095.0 * 3.3;
+    //     row_volts[1] = hall2/4095.0 * 3.3;
+    //     row_volts[2] = hall3/4095.0 * 3.3;
+    //     row_volts[3] = hall4/4095.0 * 3.3;
+    //     digitalWrite(ENABLE8, LOW);
+    //     return;
+    // }
     else{
         return;
     }
