@@ -7,6 +7,7 @@ void leds_init(){
   FastLED.addLeds<WS2812, DIN_PIN, GRB>(leds, NUM_LEDS);
   FastLED.clear();
   FastLED.show();
+
   return;
 }
 

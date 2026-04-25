@@ -1,0 +1,43 @@
+#include <Arduino.h>
+#include <stdint.h>
+#include "hall_sensor.h"
+
+// setup for hardware timer used for interrupt
+hw_timer_t *timer = nullptr;
+portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
+// flag updated in interrupt
+static volatile bool pollFlag = false;
+
+enum PieceType {
+    EMPTY,
+    PAWN,
+    ROOK,
+    KNIGHT,
+    BISHOP,
+    QUEEN,
+    KING
+};
+
+struct BoardState{
+    PieceType cur_state[8][8];
+    PieceType past_state[8][8];
+};
+
+// global variable that used to measure current state
+BoardState GameState; 
+
+// uses analog voltage to see what chess piece type it is
+PieceType get_chess_piece_type(float voltage);
+
+// initializes the state 
+void setup_state();
+
+// returns pollFlag --> pollFlag set to true every __ ms 
+bool ready_for_state_update();
+
+
+// updates the global gamestate variable
+void update_state(int row_idx);
+
+// returns gamestate
+BoardState get_state();
