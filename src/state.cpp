@@ -1,11 +1,22 @@
 #include "state.h"
 #include "hall_sensor.h"
 
+
+// setup for hardware timer used for interrupt
+hw_timer_t *timer = nullptr;
+portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
+// flag updated in interrupt and idx
+static volatile bool pollFlag = false;
 static volatile int row_idx;
+
+BoardState GameState;
 
 void IRAM_ATTR onTimer() {
   portENTER_CRITICAL_ISR(&timerMux);
   pollFlag = true;
+  if (row_idx == 8){
+    row_idx = 0;
+  }
   portEXIT_CRITICAL_ISR(&timerMux);
 }
 
@@ -54,7 +65,7 @@ bool ready_for_state_update(){
     return pollFlag;
 }
 
-void update_state(int row_idx){
+void update_state(){
     // set prev state equal to cur state
     for (int i = 0; i < 8; i++){
         for (int j = 0; j < 8; j++){
@@ -62,9 +73,10 @@ void update_state(int row_idx){
         }
     }
     float volts[8];
-    get_hall_volt(row_idx);
+    get_hall_volt(row_idx, volts);
     for (int j = 0; j < 8; j++){
         GameState.cur_state[row_idx][j] = get_chess_piece_type(volts[j]);
     }
+    row_idx++;
     return;
 }
