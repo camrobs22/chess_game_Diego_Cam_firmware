@@ -11,6 +11,9 @@ static volatile int row_idx;
 
 BoardState GameState;
 
+int total_pieces_white = 16;
+int total_pieces_black = 16;
+
 void IRAM_ATTR onTimer() {
   portENTER_CRITICAL_ISR(&timerMux);
   pollFlag = true;
@@ -22,14 +25,22 @@ void IRAM_ATTR onTimer() {
 
 
 
-PieceType get_chess_piece_type(float voltage){
+ChessPiece get_chess_piece_type(float voltage){
     // bunch of if statements for test voltages
+    ChessPiece chesspiece;
+    if (voltage < 0){
+        chesspiece.color = WHITE;
+    }
+    else if (voltage > 0){
+        chesspiece.color = BLACK;
+    }
     if (voltage == 0){
-        return EMPTY;
+        chesspiece.piecetype = EMPTY;
+        chesspiece.color = NONE;
     }
     // need to finish when testing
     //default return empty
-    return EMPTY;
+    return chesspiece;
 }
 
 // reads all of the sensors initially to get game state --> manually goes through each row 
@@ -79,4 +90,59 @@ void update_state(){
     }
     row_idx++;
     return;
+}
+// checks all criteria to make sure a game state update was valid
+bool valid_game_update(){
+    // types of valid moves: total pieces at end equals beginning and game states not the same, or total pieces is different but a different color piece took the place of another piece
+    int total_pieces_white_check = 0;
+    int total_pieces_black_check = 0;
+    for (int i = 0; i < 8; i++){
+        for (int j = 0; j < 8; j++){
+            if (GameState.cur_state[i][j].piecetype != EMPTY && GameState.cur_state[i][j].color == WHITE){
+                total_pieces_white_check++;
+            }
+            else if (GameState.cur_state[i][j].piecetype != EMPTY && GameState.cur_state[i][j].color == BLACK){
+                total_pieces_black_check++;
+            }
+        }
+    }
+
+    // return true if total pieces the same, that means the chess piece has been picked up and moved to another place without taking an opposing piece
+    if (total_pieces_white == total_pieces_white_check && total_pieces_black == total_pieces_black_check){
+        return true;
+    }
+    // black piece took a white piece
+    else if (total_pieces_white - 1 == total_pieces_white_check && total_pieces_black == total_pieces_black_check){
+        // loop through all previous white piece positions and see if they got replaced by a black piece
+        for (int i = 0; i < 8; i++){
+            for (int j = 0; j < 8; j++){
+                if (GameState.past_state[i][j].color == WHITE && GameState.cur_state[i][j].color == BLACK){
+                    total_pieces_white--;
+                    return true;
+                }
+            }
+        }
+        // no pieces were taken
+        return false;
+        
+    } 
+    // white piece tok a black piece
+    else if (total_pieces_black - 1 == total_pieces_black_check && total_pieces_white == total_pieces_white_check){
+        // loop through all previous black piece positions and see if they got replaced by a white piece
+        for (int i = 0; i < 8; i++){
+            for (int j = 0; j < 8; j++){
+                if (GameState.past_state[i][j].color == BLACK && GameState.cur_state[i][j].color == WHITE){
+                    total_pieces_black--;
+                    return true;
+                }
+            }
+        }
+        // no pieces were taken
+        return false;
+    }
+    // else return false
+    else{
+        return false;
+    }
+
 }

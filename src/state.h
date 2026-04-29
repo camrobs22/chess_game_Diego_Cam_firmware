@@ -14,16 +14,27 @@ enum PieceType {
     KING
 };
 
+enum PieceColor {
+    WHITE,
+    BLACK,
+    NONE
+};
+
+struct ChessPiece {
+    PieceColor color;
+    PieceType piecetype;
+};
+
 struct BoardState{
-    PieceType cur_state[8][8];
-    PieceType past_state[8][8];
+    ChessPiece cur_state[8][8];
+    ChessPiece past_state[8][8];
 };
 
 // global variable that used to measure current state
 extern BoardState GameState; 
 
 // uses analog voltage to see what chess piece type it is
-PieceType get_chess_piece_type(float voltage);
+ChessPiece get_chess_piece_type(float voltage);
 
 // initializes the state 
 void setup_state();
@@ -37,5 +48,8 @@ void update_state();
 
 // returns gamestate
 BoardState get_state();
+
+// checks to see if a valid move
+bool valid_game_update();
 
 #endif
