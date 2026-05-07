@@ -46,6 +46,10 @@ void test_hall(){
 
 // returns the voltages of a row of hall sensors in row_volts
 void get_hall_volt(int row_idx, float row_volts[8]){
+    // temp code for testing just one 1/4
+    for (int i = 4; i < 8; i++){
+        row_volts[i] = 1.45;
+    }
     if (row_idx == 0){
         digitalWrite(ENABLE1, HIGH);
         int hall1 = analogRead(HALL_PIN1);
@@ -97,6 +101,12 @@ void get_hall_volt(int row_idx, float row_volts[8]){
         row_volts[3] = hall4/4095.0 * 3.3;
         digitalWrite(ENABLE4, LOW);
         return;
+    }// more temp code
+    else if (row_idx == 4 || row_idx == 5 || row_idx == 6 || row_idx == 7){
+        row_volts[0] = 1.45;
+        row_volts[1] = 1.45;
+        row_volts[2] = 1.45;
+        row_volts[3] = 1.45;
     }
     // else if (row_idx == 4){
     //     digitalWrite(ENABLE5, HIGH);

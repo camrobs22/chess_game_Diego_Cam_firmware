@@ -8,18 +8,16 @@ portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
 // flag updated in interrupt and idx
 static volatile bool pollFlag = false;
 static volatile int row_idx;
+static volatile bool full_scan_complete = false;
 
 BoardState GameState;
 
-int total_pieces_white = 16;
-int total_pieces_black = 16;
+int total_pieces_white = 1;
+int total_pieces_black = 1;
 
 void IRAM_ATTR onTimer() {
   portENTER_CRITICAL_ISR(&timerMux);
   pollFlag = true;
-  if (row_idx == 8){
-    row_idx = 0;
-  }
   portEXIT_CRITICAL_ISR(&timerMux);
 }
 
@@ -28,21 +26,16 @@ void IRAM_ATTR onTimer() {
 ChessPiece get_chess_piece_type(float voltage){
     // bunch of if statements for test voltages
     ChessPiece chesspiece;
-    if (voltage <= 1.4){
-        chesspiece.color = WHITE;
+    if (voltage <= 1.35){
+        chesspiece.piecetype = WHITE;
     }
-    else if (voltage >= 1.52){
-        chesspiece.color = BLACK;
+    else if (voltage >= 1.6){
+        chesspiece.piecetype = BLACK;
     }
-    if (voltage <= 1.52 || voltage >= 1.4){
+    else{
         chesspiece.piecetype = EMPTY;
-        chesspiece.color = NONE;
     }
-    else if (voltage >= 1.52 || voltage <= 1.4){
-        chesspiece.piecetype = ROOK;
-    }
-    
-    // need to finish when testing
+     // need to finish when testing
     //default return empty
     return chesspiece;
 }
@@ -69,38 +62,13 @@ void setup_state(){
     timer = timerBegin(0, 80, true);        // 1 tick = 1 µs
     timerAttachInterrupt(timer, &onTimer, true);
 
-    timerAlarmWrite(timer, 1000000, true);    // 64 Hz
+    timerAlarmWrite(timer, 100000, true);    // 64 Hz
 
     timerAlarmEnable(timer);
 
     return;
 }
 
-char pieceToChar(ChessPiece piece) {
-  switch (piece.piecetype) {
-    case PAWN:
-      return 'P';
-
-    case ROOK:
-      return 'R';
-
-    case KNIGHT:
-      return 'N';
-
-    case BISHOP:
-      return 'B';
-
-    case QUEEN:
-      return 'Q';
-
-    case KING:
-      return 'K';
-
-    case EMPTY:
-    default:
-      return '.';
-  }
-}
 
 bool ready_for_state_update(){
     bool shouldPoll = false;
@@ -115,38 +83,44 @@ bool ready_for_state_update(){
     return shouldPoll;
 }
 
-void print_board_state() {
-  Serial.println();
-
-  for (int r = 0; r < 8; r++) {
-    Serial.print("[ ");
-
-    for (int c = 0; c < 8; c++) {
-      Serial.print(pieceToChar(GameState.cur_state[r][c]));
-      Serial.print(" ");
-    }
-
-    Serial.println("]");
-  }
-
-  Serial.println();
-}
 
 void update_state(){
-    // set prev state equal to cur state
-    for (int i = 0; i < 8; i++){
-        for (int j = 0; j < 8; j++){
-            GameState.past_state[i][j] = GameState.cur_state[i][j];
-        }
-    }
     float volts[8];
     get_hall_volt(row_idx, volts);
     for (int j = 0; j < 8; j++){
         GameState.cur_state[row_idx][j] = get_chess_piece_type(volts[j]);
     }
+    
     row_idx++;
+
+    if (row_idx >= 8){
+        row_idx = 0;
+        full_scan_complete = true;
+    }
     return;
 }
+
+void commit_state(){
+    for (int i = 0; i < 8; i++){
+        for (int j = 0; j < 8; j++){
+            GameState.past_state[i][j] = GameState.cur_state[i][j];
+        }
+    }
+}
+
+bool board_scan_complete(){
+    bool complete = false;
+
+    portENTER_CRITICAL(&timerMux);
+    if (full_scan_complete) {
+        complete = true;
+        full_scan_complete = false;
+    }
+    portEXIT_CRITICAL(&timerMux);
+
+    return complete;
+}
+
 // checks all criteria to make sure a game state update was valid
 bool valid_game_update(){
     // types of valid moves: total pieces at end equals beginning and game states not the same, or total pieces is different but a different color piece took the place of another piece
@@ -154,10 +128,10 @@ bool valid_game_update(){
     int total_pieces_black_check = 0;
     for (int i = 0; i < 8; i++){
         for (int j = 0; j < 8; j++){
-            if (GameState.cur_state[i][j].piecetype != EMPTY && GameState.cur_state[i][j].color == WHITE){
+            if (GameState.cur_state[i][j].piecetype != EMPTY && GameState.cur_state[i][j].piecetype == WHITE){
                 total_pieces_white_check++;
             }
-            else if (GameState.cur_state[i][j].piecetype != EMPTY && GameState.cur_state[i][j].color == BLACK){
+            else if (GameState.cur_state[i][j].piecetype != EMPTY && GameState.cur_state[i][j].piecetype == BLACK){
                 total_pieces_black_check++;
             }
         }
@@ -172,7 +146,7 @@ bool valid_game_update(){
         // loop through all previous white piece positions and see if they got replaced by a black piece
         for (int i = 0; i < 8; i++){
             for (int j = 0; j < 8; j++){
-                if (GameState.past_state[i][j].color == WHITE && GameState.cur_state[i][j].color == BLACK){
+                if (GameState.past_state[i][j].piecetype == WHITE && GameState.cur_state[i][j].piecetype == BLACK){
                     total_pieces_white--;
                     return true;
                 }
@@ -187,7 +161,7 @@ bool valid_game_update(){
         // loop through all previous black piece positions and see if they got replaced by a white piece
         for (int i = 0; i < 8; i++){
             for (int j = 0; j < 8; j++){
-                if (GameState.past_state[i][j].color == BLACK && GameState.cur_state[i][j].color == WHITE){
+                if (GameState.past_state[i][j].piecetype == BLACK && GameState.cur_state[i][j].piecetype == WHITE){
                     total_pieces_black--;
                     return true;
                 }

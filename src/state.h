@@ -6,22 +6,11 @@
 
 enum PieceType {
     EMPTY,
-    PAWN,
-    ROOK,
-    KNIGHT,
-    BISHOP,
-    QUEEN,
-    KING
-};
-
-enum PieceColor {
     WHITE,
-    BLACK,
-    NONE
+    BLACK
 };
 
 struct ChessPiece {
-    PieceColor color;
     PieceType piecetype;
 };
 
@@ -47,6 +36,10 @@ bool ready_for_state_update();
 
 // updates the global gamestate variable
 void update_state();
+
+void commit_state();
+
+bool board_scan_complete();
 
 // returns gamestate
 BoardState get_state();
