@@ -12,6 +12,22 @@ void leds_init(){
 }
 
 void set_led(int idx){
+  FastLED.clear();
+
+  if (idx >= 0 && idx < NUM_LEDS) {
     leds[idx] = CRGB::Blue;
-    return;
+  }
+
+  FastLED.show();
+  return;
+}
+
+void test_led(){
+  for (int i = 0; i < 5; i++){
+    FastLED.clear();
+    leds[i] = CRGB::Red;
+    delay(1000);
+    FastLED.show();
+  }
+  return;
 }

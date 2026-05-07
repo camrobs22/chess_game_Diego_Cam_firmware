@@ -10,3 +10,5 @@
 void leds_init();
 
 void set_led(int idx);
+
+void test_led();

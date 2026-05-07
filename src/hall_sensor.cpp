@@ -21,21 +21,21 @@ void hall_init(){
 }
 
 void test_hall(){
-  digitalWrite(ENABLE1, HIGH);
+  digitalWrite(ENABLE4, HIGH);
   int hall1 = analogRead(HALL_PIN1);
-  delayMicroseconds(100);
-  digitalWrite(ENABLE1, LOW);
-  digitalWrite(ENABLE2, HIGH);
+//   delayMicroseconds(100);
+//   digitalWrite(ENABLE1, LOW);
+//   digitalWrite(ENABLE2, HIGH);
   int hall2 = analogRead(HALL_PIN2);
-  delayMicroseconds(100);
-  digitalWrite(ENABLE2, LOW);
-  digitalWrite(ENABLE3, HIGH);
+//   delayMicroseconds(100);
+//   digitalWrite(ENABLE2, LOW);
+//   digitalWrite(ENABLE3, HIGH);
   int hall3 = analogRead(HALL_PIN3);
   delayMicroseconds(100);
-  digitalWrite(ENABLE3, LOW);
-  digitalWrite(ENABLE4, HIGH);
+//   digitalWrite(ENABLE3, LOW);
+//   digitalWrite(ENABLE4, HIGH);
   int hall4 = analogRead(HALL_PIN4);
-  delayMicroseconds(100);
+//   delayMicroseconds(100);
   digitalWrite(ENABLE4, LOW);
   float hall1_volt = hall1/4095.0 * 3.3;
   float hall2_volt = hall2/4095.0 * 3.3;
