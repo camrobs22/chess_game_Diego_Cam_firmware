@@ -28,16 +28,20 @@ void IRAM_ATTR onTimer() {
 ChessPiece get_chess_piece_type(float voltage){
     // bunch of if statements for test voltages
     ChessPiece chesspiece;
-    if (voltage < 0){
+    if (voltage <= 1.4){
         chesspiece.color = WHITE;
     }
-    else if (voltage > 0){
+    else if (voltage >= 1.52){
         chesspiece.color = BLACK;
     }
-    if (voltage == 0){
+    if (voltage <= 1.52 || voltage >= 1.4){
         chesspiece.piecetype = EMPTY;
         chesspiece.color = NONE;
     }
+    else if (voltage >= 1.52 || voltage <= 1.4){
+        chesspiece.piecetype = ROOK;
+    }
+    
     // need to finish when testing
     //default return empty
     return chesspiece;
@@ -65,15 +69,67 @@ void setup_state(){
     timer = timerBegin(0, 80, true);        // 1 tick = 1 µs
     timerAttachInterrupt(timer, &onTimer, true);
 
-    timerAlarmWrite(timer, 15625, true);    // 64 Hz
+    timerAlarmWrite(timer, 1000000, true);    // 64 Hz
 
     timerAlarmEnable(timer);
 
     return;
 }
 
+char pieceToChar(ChessPiece piece) {
+  switch (piece.piecetype) {
+    case PAWN:
+      return 'P';
+
+    case ROOK:
+      return 'R';
+
+    case KNIGHT:
+      return 'N';
+
+    case BISHOP:
+      return 'B';
+
+    case QUEEN:
+      return 'Q';
+
+    case KING:
+      return 'K';
+
+    case EMPTY:
+    default:
+      return '.';
+  }
+}
+
 bool ready_for_state_update(){
-    return pollFlag;
+    bool shouldPoll = false;
+
+    portENTER_CRITICAL(&timerMux);
+    if (pollFlag) {
+        shouldPoll = true;
+        pollFlag = false;
+    }
+    portEXIT_CRITICAL(&timerMux);
+
+    return shouldPoll;
+}
+
+void print_board_state() {
+  Serial.println();
+
+  for (int r = 0; r < 8; r++) {
+    Serial.print("[ ");
+
+    for (int c = 0; c < 8; c++) {
+      Serial.print(pieceToChar(GameState.cur_state[r][c]));
+      Serial.print(" ");
+    }
+
+    Serial.println("]");
+  }
+
+  Serial.println();
 }
 
 void update_state(){

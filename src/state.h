@@ -39,6 +39,8 @@ ChessPiece get_chess_piece_type(float voltage);
 // initializes the state 
 void setup_state();
 
+void print_board_state();
+
 // returns pollFlag --> pollFlag set to true every __ ms 
 bool ready_for_state_update();
 

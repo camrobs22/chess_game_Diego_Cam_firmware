@@ -23,10 +23,10 @@ void set_led(int idx){
 }
 
 void test_led(){
-  for (int i = 0; i < 5; i++){
+  for (int i = 0; i < 25; i++){
     FastLED.clear();
     leds[i] = CRGB::Red;
-    delay(1000);
+    delay(200);
     FastLED.show();
   }
   return;
