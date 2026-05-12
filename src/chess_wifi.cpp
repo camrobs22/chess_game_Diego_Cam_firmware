@@ -127,7 +127,7 @@ void handle_server_message(uint8_t* payload, size_t length) {
         Serial.print("Virtual board move received: ");
         Serial.println(move);
 
-        virtual_move = move;
+        virtual_move = String(move);
 
         int fromRow, fromCol, toRow, toCol;
 

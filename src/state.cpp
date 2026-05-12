@@ -13,7 +13,7 @@ static volatile bool full_scan_complete = false;
 BoardState GameState;
 
 int total_pieces_white = 1;
-int total_pieces_black = 0;
+int total_pieces_black = 1;
 
 void IRAM_ATTR onTimer() {
   portENTER_CRITICAL_ISR(&timerMux);

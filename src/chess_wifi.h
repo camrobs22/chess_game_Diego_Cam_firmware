@@ -21,3 +21,5 @@ void send_board_move(int from_row, int from_col, int to_row, int to_col);
 String get_virtual_move();
 
 void clear_virtual_move();
+
+bool parse_uci_move(const char* move, int& fromRow, int& fromCol, int& toRow, int& toCol);
