@@ -158,7 +158,16 @@ void loop() {
         send_board_move(fromRow, fromCol, toRow, toCol);
         // commit the state
         commit_state();
-        
+        // wait for server to send virtual move
+        while (get_virtual_move() != ""){
+          // do nothing
+        }
+        String vmove = get_virtual_move();
+        // get move and show it on LEDS
+        // show_move(vmove);
+        Serial.printf("got a virtual move %s", vmove);
+        // clear virtual move for next time
+        clear_virtual_move();
       }
       else{
         Serial.println("Board changed, but move is not complete yet.");

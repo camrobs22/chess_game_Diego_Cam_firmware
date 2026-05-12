@@ -7,15 +7,12 @@ const char* WIFI_PASS = "lmgtyt13";
 const char* SERVER_URL = "http://172.20.10.7:3000/api/test";
 
 const char* SERVER_IP = "172.20.10.7";
-const uint16_t SERVER_PORT = 3000;3
+const uint16_t SERVER_PORT = 3000;
 
 WebSocketsClient webSocket;
 bool socketConnected = false;
 
-int virtual_from_row = -1;
-int virtual_from_col = -1;
-int virtual_to_col = -1;
-int virtual_to_row = -1;
+String virtual_move = "";
 
 bool wifi_connect() {
     WiFi.mode(WIFI_STA);
@@ -129,6 +126,8 @@ void handle_server_message(uint8_t* payload, size_t length) {
 
         Serial.print("Virtual board move received: ");
         Serial.println(move);
+
+        virtual_move = move;
 
         int fromRow, fromCol, toRow, toCol;
 
@@ -247,3 +246,11 @@ void send_board_move(int from_row, int from_col, int to_row, int to_col) {
     webSocket.sendTXT(output);
 }
 
+
+String get_virtual_move(){
+    return virtual_move;
+}
+
+void clear_virtual_move(){
+    virtual_move = "";
+}

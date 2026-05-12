@@ -17,3 +17,7 @@ bool websocket_is_connected();
 void send_hello_to_server();
 
 void send_board_move(int from_row, int from_col, int to_row, int to_col);
+
+String get_virtual_move();
+
+void clear_virtual_move();
