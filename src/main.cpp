@@ -3,7 +3,7 @@
 #include "hall_sensor.h"
 #include "leds.h"
 #include "state.h"
-//#include "wifi.h"
+#include "chess_wifi.h"
 
 void setup() {
   // put your setup code here, to run once:
@@ -13,7 +13,36 @@ void setup() {
   hall_init();
   leds_init();
   setup_state();
+  // // // wifi setup
+  bool connected = wifi_connect();
+
+  if (!connected) {
+    Serial.println("Stopping network setup because WiFi failed.");
+    return;
+  }
+
+  bool serverOk = test_server_http();
+
+  if (!serverOk) {
+    Serial.println("HTTP test failed. Not starting WebSocket yet.");
+    return;
+  }
+
+  websocket_begin();
   //print_board_state();
+  // test to see what networks are around
+  // Serial.println("Scanning WiFi networks...");
+  // int n = WiFi.scanNetworks();
+
+  // Serial.printf("Found %i networks\n", n);
+
+  // for (int i = 0; i < n; i++) {
+  //   Serial.print(i);
+  //   Serial.print(": ");
+  //   Serial.print(WiFi.SSID(i));
+  //   Serial.print(" RSSI=");
+  //   Serial.println(WiFi.RSSI(i));
+  // }
 }
 
 void loop() {
@@ -23,11 +52,12 @@ void loop() {
   // // set_led(4);
   // test_led();
   // delay(100);
+  websocket_loop();
   
   // set a tolerance to detect change in state
   //float tol = 0.5;
   // interrupt that sets every __ ms
-  int count = 0;
+  // int count = 0;
   if (ready_for_state_update()){
     update_state();
 
@@ -124,6 +154,9 @@ void loop() {
       if (valid_game_update()){
         // keep waiting and updating the state until you reach a valid game state that's different from the start
         Serial.printf("Game state update valid, move has been made! Piece was moved from row: %i col: %i to row: %i col: %i\r\n", fromRow, fromCol, toRow, toCol);
+        // send the move to the server
+        send_board_move(fromRow, fromCol, toRow, toCol);
+        // commit the state
         commit_state();
         
       }

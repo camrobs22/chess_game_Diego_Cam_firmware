@@ -13,7 +13,7 @@ static volatile bool full_scan_complete = false;
 BoardState GameState;
 
 int total_pieces_white = 1;
-int total_pieces_black = 1;
+int total_pieces_black = 0;
 
 void IRAM_ATTR onTimer() {
   portENTER_CRITICAL_ISR(&timerMux);
@@ -136,7 +136,8 @@ bool valid_game_update(){
             }
         }
     }
-
+    // Serial.printf("num white pieces = %i and num black pieces = %i\r\n", total_pieces_white_check, total_pieces_black_check);
+    // Serial.printf("expected white pieces = %i and expected black pieces = %i\r\n", total_pieces_white, total_pieces_black);
     // return true if total pieces the same, that means the chess piece has been picked up and moved to another place without taking an opposing piece
     if (total_pieces_white == total_pieces_white_check && total_pieces_black == total_pieces_black_check){
         return true;

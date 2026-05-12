@@ -6,46 +6,14 @@
 #include <ArduinoJson.h>
 
 
-const char* WIFI_SSID = "Cameron's iPhone xs Max (2)";
-const char* WIFI_PASS = "lmgtyt13";
 
-const char* SERVER_URL = "http://10.104.226.11:3000/api/test";
+bool wifi_connect();
+bool test_server_http();
 
-void setup() {
-    Serial.begin(115200);
+void websocket_begin();
+void websocket_loop();
+bool websocket_is_connected();
 
-    // Connect to WiFi
-    WiFi.begin(WIFI_SSID, WIFI_PASS);
+void send_hello_to_server();
 
-    Serial.print("Connecting to WiFi");
-
-    while (WiFi.status() != WL_CONNECTED) {
-        delay(500);
-        Serial.print(".");
-    }
-
-    Serial.println();
-    Serial.println("WiFi connected");
-
-    // Make HTTP request
-    HTTPClient http;
-
-    http.begin(SERVER_URL);
-
-    int httpCode = http.GET();
-
-    Serial.print("HTTP Response code: ");
-    Serial.println(httpCode);
-
-    if (httpCode > 0) {
-        String payload = http.getString();
-
-        Serial.println("Server response:");
-        Serial.println(payload);
-    }
-
-    http.end();
-}
-
-void loop() {
-}
+void send_board_move(int from_row, int from_col, int to_row, int to_col);
