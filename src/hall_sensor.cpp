@@ -9,19 +9,28 @@ void hall_init(){
   pinMode(HALL_PIN3, INPUT);
   pinMode(HALL_PIN4, INPUT);
 
+
   pinMode(ENABLE1, OUTPUT);
   pinMode(ENABLE2, OUTPUT);
   pinMode(ENABLE3, OUTPUT);
   pinMode(ENABLE4, OUTPUT);
+  pinMode(ENABLE5, OUTPUT);
+  pinMode(ENABLE6, OUTPUT);
+  pinMode(ENABLE7, OUTPUT);
+  pinMode(ENABLE8, OUTPUT);
   
   digitalWrite(ENABLE1, LOW);
   digitalWrite(ENABLE2, LOW);
   digitalWrite(ENABLE3, LOW);
   digitalWrite(ENABLE4, LOW);
+  digitalWrite(ENABLE5, LOW);
+  digitalWrite(ENABLE6, LOW);
+  digitalWrite(ENABLE7, LOW);
+  digitalWrite(ENABLE8, LOW);
 }
 
 void test_hall(){
-  digitalWrite(ENABLE1, HIGH);
+  digitalWrite(ENABLE8, HIGH);
   int hall1 = analogRead(HALL_PIN1);
 //   delayMicroseconds(100);
 //   digitalWrite(ENABLE1, LOW);
@@ -36,7 +45,7 @@ void test_hall(){
 //   digitalWrite(ENABLE4, HIGH);
   int hall4 = analogRead(HALL_PIN4);
 //   delayMicroseconds(100);
-  digitalWrite(ENABLE1, LOW);
+  digitalWrite(ENABLE8, LOW);
   float hall1_volt = hall1/4095.0 * 3.3;
   float hall2_volt = hall2/4095.0 * 3.3;
   float hall3_volt = hall3/4095.0 * 3.3;
@@ -46,7 +55,7 @@ void test_hall(){
 
 // returns the voltages of a row of hall sensors in row_volts
 void get_hall_volt(int row_idx, float row_volts[8]){
-    // temp code for testing just one 1/4
+  // temp code
     for (int i = 4; i < 8; i++){
         row_volts[i] = 1.45;
     }
@@ -101,65 +110,59 @@ void get_hall_volt(int row_idx, float row_volts[8]){
         row_volts[3] = hall4/4095.0 * 3.3;
         digitalWrite(ENABLE4, LOW);
         return;
-    }// more temp code
-    else if (row_idx == 4 || row_idx == 5 || row_idx == 6 || row_idx == 7){
-        row_volts[0] = 1.45;
-        row_volts[1] = 1.45;
-        row_volts[2] = 1.45;
-        row_volts[3] = 1.45;
     }
-    // else if (row_idx == 4){
-    //     digitalWrite(ENABLE5, HIGH);
-    //     int hall1 = analogRead(HALL_PIN1);
-    //     int hall2 = analogRead(HALL_PIN2);
-    //     int hall3 = analogRead(HALL_PIN3);
-    //     int hall4 = analogRead(HALL_PIN4);
-    //     row_volts[0] = hall1/4095.0 * 3.3;
-    //     row_volts[1] = hall2/4095.0 * 3.3;
-    //     row_volts[2] = hall3/4095.0 * 3.3;
-    //     row_volts[3] = hall4/4095.0 * 3.3;
-    //     digitalWrite(ENABLE5, LOW);
-    //     return;
-    // }
-    // else if (row_idx == 5){
-    //     digitalWrite(ENABLE6, HIGH);
-    //     int hall1 = analogRead(HALL_PIN1);
-    //     int hall2 = analogRead(HALL_PIN2);
-    //     int hall3 = analogRead(HALL_PIN3);
-    //     int hall4 = analogRead(HALL_PIN4);
-    //     row_volts[0] = hall1/4095.0 * 3.3;
-    //     row_volts[1] = hall2/4095.0 * 3.3;
-    //     row_volts[2] = hall3/4095.0 * 3.3;
-    //     row_volts[3] = hall4/4095.0 * 3.3;
-    //     digitalWrite(ENABLE6, LOW);
-    //     return;
-    // }
-    // else if (row_idx == 6){
-    //     digitalWrite(ENABLE7, HIGH);
-    //     int hall1 = analogRead(HALL_PIN1);
-    //     int hall2 = analogRead(HALL_PIN2);
-    //     int hall3 = analogRead(HALL_PIN3);
-    //     int hall4 = analogRead(HALL_PIN4);
-    //     row_volts[0] = hall1/4095.0 * 3.3;
-    //     row_volts[1] = hall2/4095.0 * 3.3;
-    //     row_volts[2] = hall3/4095.0 * 3.3;
-    //     row_volts[3] = hall4/4095.0 * 3.3;
-    //     digitalWrite(ENABLE7, LOW);
-    //     return;
-    // }
-    // else if (row_idx == 7){
-    //     digitalWrite(ENABLE8, HIGH);
-    //     int hall1 = analogRead(HALL_PIN1);
-    //     int hall2 = analogRead(HALL_PIN2);
-    //     int hall3 = analogRead(HALL_PIN3);
-    //     int hall4 = analogRead(HALL_PIN4);
-    //     row_volts[0] = hall1/4095.0 * 3.3;
-    //     row_volts[1] = hall2/4095.0 * 3.3;
-    //     row_volts[2] = hall3/4095.0 * 3.3;
-    //     row_volts[3] = hall4/4095.0 * 3.3;
-    //     digitalWrite(ENABLE8, LOW);
-    //     return;
-    // }
+    else if (row_idx == 4){
+        digitalWrite(ENABLE5, HIGH);
+        int hall1 = analogRead(HALL_PIN1);
+        int hall2 = analogRead(HALL_PIN2);
+        int hall3 = analogRead(HALL_PIN3);
+        int hall4 = analogRead(HALL_PIN4);
+        row_volts[0] = hall1/4095.0 * 3.3;
+        row_volts[1] = hall2/4095.0 * 3.3;
+        row_volts[2] = hall3/4095.0 * 3.3;
+        row_volts[3] = hall4/4095.0 * 3.3;
+        digitalWrite(ENABLE5, LOW);
+        return;
+    }
+    else if (row_idx == 5){
+        digitalWrite(ENABLE6, HIGH);
+        int hall1 = analogRead(HALL_PIN1);
+        int hall2 = analogRead(HALL_PIN2);
+        int hall3 = analogRead(HALL_PIN3);
+        int hall4 = analogRead(HALL_PIN4);
+        row_volts[0] = hall1/4095.0 * 3.3;
+        row_volts[1] = hall2/4095.0 * 3.3;
+        row_volts[2] = hall3/4095.0 * 3.3;
+        row_volts[3] = hall4/4095.0 * 3.3;
+        digitalWrite(ENABLE6, LOW);
+        return;
+    }
+    else if (row_idx == 6){
+        digitalWrite(ENABLE7, HIGH);
+        int hall1 = analogRead(HALL_PIN1);
+        int hall2 = analogRead(HALL_PIN2);
+        int hall3 = analogRead(HALL_PIN3);
+        int hall4 = analogRead(HALL_PIN4);
+        row_volts[0] = hall1/4095.0 * 3.3;
+        row_volts[1] = hall2/4095.0 * 3.3;
+        row_volts[2] = hall3/4095.0 * 3.3;
+        row_volts[3] = hall4/4095.0 * 3.3;
+        digitalWrite(ENABLE7, LOW);
+        return;
+    }
+    else if (row_idx == 7){
+        digitalWrite(ENABLE8, HIGH);
+        int hall1 = analogRead(HALL_PIN1);
+        int hall2 = analogRead(HALL_PIN2);
+        int hall3 = analogRead(HALL_PIN3);
+        int hall4 = analogRead(HALL_PIN4);
+        row_volts[0] = hall1/4095.0 * 3.3;
+        row_volts[1] = hall2/4095.0 * 3.3;
+        row_volts[2] = hall3/4095.0 * 3.3;
+        row_volts[3] = hall4/4095.0 * 3.3;
+        digitalWrite(ENABLE8, LOW);
+        return;
+    }
     else{
         return;
     }

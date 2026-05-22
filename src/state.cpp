@@ -53,8 +53,8 @@ void setup_state(){
         }
     }
     // set curstate = past state
-    for (int i = 0; i < 4; i++){
-        for (int j = 0; j < 4; j++){
+    for (int i = 0; i < 8; i++){
+        for (int j = 0; j < 8; j++){
             GameState.past_state[i][j] = GameState.cur_state[i][j];
         }
     }

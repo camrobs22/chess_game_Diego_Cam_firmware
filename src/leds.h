@@ -5,12 +5,14 @@
 // LED decleration
 #define NUM_LEDS 25
 #define DIN1_PIN 13
-#define DIN2_PIN 9
-#define DIN3_PIN 10
-#define DIN4_PIN 11
+#define DIN3_PIN 19
+#define DIN2_PIN 18
+#define DIN4_PIN 17
 
 
 void leds_init();
+
+bool get_tile_location(String tile, int &boardIndex, int &localRow, int &localCol);
 
 void set_led(int idx);
 

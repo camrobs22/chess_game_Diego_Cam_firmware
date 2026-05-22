@@ -14,6 +14,9 @@ void setup()
   hall_init();
   leds_init();
   setup_state();
+
+  // Save the initial board position as the baseline
+  commit_state();
   // // // wifi setup
   bool connected = wifi_connect();
 
