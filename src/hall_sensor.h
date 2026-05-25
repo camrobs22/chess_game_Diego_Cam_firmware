@@ -17,7 +17,7 @@
 #define ENABLE5 23
 #define ENABLE6 22
 #define ENABLE7 21
-#define ENABLE8 4
+#define ENABLE8 16
 
 void hall_init();
 

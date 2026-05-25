@@ -8,6 +8,9 @@ void hall_init(){
   pinMode(HALL_PIN2, INPUT);
   pinMode(HALL_PIN3, INPUT);
   pinMode(HALL_PIN4, INPUT);
+  pinMode(HALL_PIN5, INPUT);
+  pinMode(HALL_PIN6, INPUT);
+  pinMode(HALL_PIN7, INPUT);
 
 
   pinMode(ENABLE1, OUTPUT);
@@ -30,7 +33,7 @@ void hall_init(){
 }
 
 void test_hall(){
-  digitalWrite(ENABLE8, HIGH);
+  digitalWrite(ENABLE5, HIGH);
   int hall1 = analogRead(HALL_PIN1);
 //   delayMicroseconds(100);
 //   digitalWrite(ENABLE1, LOW);
@@ -44,31 +47,44 @@ void test_hall(){
 //   digitalWrite(ENABLE3, LOW);
 //   digitalWrite(ENABLE4, HIGH);
   int hall4 = analogRead(HALL_PIN4);
+  int hall5 = analogRead(HALL_PIN5);
+  int hall6 = analogRead(HALL_PIN6);
+  int hall7 = analogRead(HALL_PIN7);
 //   delayMicroseconds(100);
-  digitalWrite(ENABLE8, LOW);
+  digitalWrite(ENABLE5, LOW);
   float hall1_volt = hall1/4095.0 * 3.3;
   float hall2_volt = hall2/4095.0 * 3.3;
   float hall3_volt = hall3/4095.0 * 3.3;
   float hall4_volt = hall4/4095.0 * 3.3;
-  Serial.printf("H1=%f H2=%f H3=%f H4=%f\n", hall1_volt, hall2_volt, hall3_volt, hall4_volt);
+  float hall5_volt = hall5/4095.0 * 3.3;
+  float hall6_volt = hall6/4095.0 * 3.3;
+  float hall7_volt = hall7/4095.0 * 3.3;
+  Serial.printf("H1=%f H2=%f H3=%f H4=%f H5=%f H6=%f H7=%f\r\n", hall1_volt, hall2_volt, hall3_volt, hall4_volt, hall5_volt, hall6_volt, hall7_volt);
 }
 
 // returns the voltages of a row of hall sensors in row_volts
 void get_hall_volt(int row_idx, float row_volts[8]){
   // temp code
-    for (int i = 4; i < 8; i++){
-        row_volts[i] = 1.45;
-    }
+    // for (int i = 4; i < 8; i++){
+    //     row_volts[i] = 1.45;
+    // }
+    row_volts[7] = 1.45;
     if (row_idx == 0){
         digitalWrite(ENABLE1, HIGH);
         int hall1 = analogRead(HALL_PIN1);
         int hall2 = analogRead(HALL_PIN2);
         int hall3 = analogRead(HALL_PIN3);
         int hall4 = analogRead(HALL_PIN4);
+        int hall5 = analogRead(HALL_PIN5);
+        int hall6 = analogRead(HALL_PIN6);
+        int hall7 = analogRead(HALL_PIN7);        
         row_volts[0] = hall1/4095.0 * 3.3;
         row_volts[1] = hall2/4095.0 * 3.3;
         row_volts[2] = hall3/4095.0 * 3.3;
         row_volts[3] = hall4/4095.0 * 3.3;
+        row_volts[4] = hall5/4095.0 * 3.3;
+        row_volts[5] = hall6/4095.0 * 3.3;
+        row_volts[6] = hall7/4095.0 * 3.3;
         digitalWrite(ENABLE1, LOW);
         return;
     }
@@ -78,10 +94,16 @@ void get_hall_volt(int row_idx, float row_volts[8]){
         int hall2 = analogRead(HALL_PIN2);
         int hall3 = analogRead(HALL_PIN3);
         int hall4 = analogRead(HALL_PIN4);
+        int hall5 = analogRead(HALL_PIN5);
+        int hall6 = analogRead(HALL_PIN6);
+        int hall7 = analogRead(HALL_PIN7);        
         row_volts[0] = hall1/4095.0 * 3.3;
         row_volts[1] = hall2/4095.0 * 3.3;
         row_volts[2] = hall3/4095.0 * 3.3;
         row_volts[3] = hall4/4095.0 * 3.3;
+        row_volts[4] = hall5/4095.0 * 3.3;
+        row_volts[5] = hall6/4095.0 * 3.3;
+        row_volts[6] = hall7/4095.0 * 3.3;
         digitalWrite(ENABLE2, LOW);
         return;
     }
@@ -91,10 +113,16 @@ void get_hall_volt(int row_idx, float row_volts[8]){
         int hall2 = analogRead(HALL_PIN2);
         int hall3 = analogRead(HALL_PIN3);
         int hall4 = analogRead(HALL_PIN4);
+        int hall5 = analogRead(HALL_PIN5);
+        int hall6 = analogRead(HALL_PIN6);
+        int hall7 = analogRead(HALL_PIN7);        
         row_volts[0] = hall1/4095.0 * 3.3;
         row_volts[1] = hall2/4095.0 * 3.3;
         row_volts[2] = hall3/4095.0 * 3.3;
         row_volts[3] = hall4/4095.0 * 3.3;
+        row_volts[4] = hall5/4095.0 * 3.3;
+        row_volts[5] = hall6/4095.0 * 3.3;
+        row_volts[6] = hall7/4095.0 * 3.3;
         digitalWrite(ENABLE3, LOW);
         return;
     }
@@ -104,10 +132,16 @@ void get_hall_volt(int row_idx, float row_volts[8]){
         int hall2 = analogRead(HALL_PIN2);
         int hall3 = analogRead(HALL_PIN3);
         int hall4 = analogRead(HALL_PIN4);
+        int hall5 = analogRead(HALL_PIN5);
+        int hall6 = analogRead(HALL_PIN6);
+        int hall7 = analogRead(HALL_PIN7);        
         row_volts[0] = hall1/4095.0 * 3.3;
         row_volts[1] = hall2/4095.0 * 3.3;
         row_volts[2] = hall3/4095.0 * 3.3;
         row_volts[3] = hall4/4095.0 * 3.3;
+        row_volts[4] = hall5/4095.0 * 3.3;
+        row_volts[5] = hall6/4095.0 * 3.3;
+        row_volts[6] = hall7/4095.0 * 3.3;
         digitalWrite(ENABLE4, LOW);
         return;
     }
@@ -117,10 +151,16 @@ void get_hall_volt(int row_idx, float row_volts[8]){
         int hall2 = analogRead(HALL_PIN2);
         int hall3 = analogRead(HALL_PIN3);
         int hall4 = analogRead(HALL_PIN4);
+        int hall5 = analogRead(HALL_PIN5);
+        int hall6 = analogRead(HALL_PIN6);
+        int hall7 = analogRead(HALL_PIN7);        
         row_volts[0] = hall1/4095.0 * 3.3;
         row_volts[1] = hall2/4095.0 * 3.3;
         row_volts[2] = hall3/4095.0 * 3.3;
         row_volts[3] = hall4/4095.0 * 3.3;
+        row_volts[4] = hall5/4095.0 * 3.3;
+        row_volts[5] = hall6/4095.0 * 3.3;
+        row_volts[6] = hall7/4095.0 * 3.3;
         digitalWrite(ENABLE5, LOW);
         return;
     }
@@ -130,10 +170,16 @@ void get_hall_volt(int row_idx, float row_volts[8]){
         int hall2 = analogRead(HALL_PIN2);
         int hall3 = analogRead(HALL_PIN3);
         int hall4 = analogRead(HALL_PIN4);
+        int hall5 = analogRead(HALL_PIN5);
+        int hall6 = analogRead(HALL_PIN6);
+        int hall7 = analogRead(HALL_PIN7);        
         row_volts[0] = hall1/4095.0 * 3.3;
         row_volts[1] = hall2/4095.0 * 3.3;
         row_volts[2] = hall3/4095.0 * 3.3;
         row_volts[3] = hall4/4095.0 * 3.3;
+        row_volts[4] = hall5/4095.0 * 3.3;
+        row_volts[5] = hall6/4095.0 * 3.3;
+        row_volts[6] = hall7/4095.0 * 3.3;
         digitalWrite(ENABLE6, LOW);
         return;
     }
@@ -143,10 +189,16 @@ void get_hall_volt(int row_idx, float row_volts[8]){
         int hall2 = analogRead(HALL_PIN2);
         int hall3 = analogRead(HALL_PIN3);
         int hall4 = analogRead(HALL_PIN4);
+        int hall5 = analogRead(HALL_PIN5);
+        int hall6 = analogRead(HALL_PIN6);
+        int hall7 = analogRead(HALL_PIN7);        
         row_volts[0] = hall1/4095.0 * 3.3;
         row_volts[1] = hall2/4095.0 * 3.3;
         row_volts[2] = hall3/4095.0 * 3.3;
         row_volts[3] = hall4/4095.0 * 3.3;
+        row_volts[4] = hall5/4095.0 * 3.3;
+        row_volts[5] = hall6/4095.0 * 3.3;
+        row_volts[6] = hall7/4095.0 * 3.3;
         digitalWrite(ENABLE7, LOW);
         return;
     }
@@ -156,10 +208,16 @@ void get_hall_volt(int row_idx, float row_volts[8]){
         int hall2 = analogRead(HALL_PIN2);
         int hall3 = analogRead(HALL_PIN3);
         int hall4 = analogRead(HALL_PIN4);
+        int hall5 = analogRead(HALL_PIN5);
+        int hall6 = analogRead(HALL_PIN6);
+        int hall7 = analogRead(HALL_PIN7);        
         row_volts[0] = hall1/4095.0 * 3.3;
         row_volts[1] = hall2/4095.0 * 3.3;
         row_volts[2] = hall3/4095.0 * 3.3;
         row_volts[3] = hall4/4095.0 * 3.3;
+        row_volts[4] = hall5/4095.0 * 3.3;
+        row_volts[5] = hall6/4095.0 * 3.3;
+        row_volts[6] = hall7/4095.0 * 3.3;
         digitalWrite(ENABLE8, LOW);
         return;
     }

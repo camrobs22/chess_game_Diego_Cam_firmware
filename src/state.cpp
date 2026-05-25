@@ -29,7 +29,7 @@ ChessPiece get_chess_piece_type(float voltage){
     if (voltage <= 1.35){
         chesspiece.piecetype = WHITE;
     }
-    else if (voltage >= 1.6){
+    else if (voltage >= 1.65){
         chesspiece.piecetype = BLACK;
     }
     else{
@@ -58,6 +58,23 @@ void setup_state(){
             GameState.past_state[i][j] = GameState.cur_state[i][j];
         }
     }
+
+    //print the total number of white and black pieces
+    int total_pieces_white_check = 0;
+    int total_pieces_black_check = 0;
+    for (int i = 0; i < 8; i++){
+        for (int j = 0; j < 8; j++){
+            if (GameState.cur_state[i][j].piecetype == WHITE){
+                total_pieces_white_check++;
+            }
+            else if (GameState.cur_state[i][j].piecetype == BLACK){
+                total_pieces_black_check++;
+            }
+        }
+    }
+    Serial.printf("num white pieces = %i and num black pieces = %i\r\n", total_pieces_white_check, total_pieces_black_check);
+    Serial.printf("expected white pieces = %i and expected black pieces = %i\r\n", total_pieces_white, total_pieces_black);
+
     // now we have gone through more slowly through intial placement enable interrupt to start getting updates automatically
     timer = timerBegin(0, 80, true);        // 1 tick = 1 µs
     timerAttachInterrupt(timer, &onTimer, true);
@@ -65,6 +82,8 @@ void setup_state(){
     timerAlarmWrite(timer, 100000, true);    // 64 Hz
 
     timerAlarmEnable(timer);
+
+    Serial.printf("Playing game with %i white pieces and %i black pieces\r\n", total_pieces_white, total_pieces_black);
 
     return;
 }
@@ -136,8 +155,8 @@ bool valid_game_update(){
             }
         }
     }
-    // Serial.printf("num white pieces = %i and num black pieces = %i\r\n", total_pieces_white_check, total_pieces_black_check);
-    // Serial.printf("expected white pieces = %i and expected black pieces = %i\r\n", total_pieces_white, total_pieces_black);
+    Serial.printf("num white pieces = %i and num black pieces = %i\r\n", total_pieces_white_check, total_pieces_black_check);
+    Serial.printf("expected white pieces = %i and expected black pieces = %i\r\n", total_pieces_white, total_pieces_black);
     // return true if total pieces the same, that means the chess piece has been picked up and moved to another place without taking an opposing piece
     if (total_pieces_white == total_pieces_white_check && total_pieces_black == total_pieces_black_check){
         return true;
