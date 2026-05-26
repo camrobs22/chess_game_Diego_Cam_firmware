@@ -12,8 +12,8 @@ static volatile bool full_scan_complete = false;
 
 BoardState GameState;
 
-int total_pieces_white = 1;
-int total_pieces_black = 1;
+int total_pieces_white = 12;
+int total_pieces_black = 12;
 
 void IRAM_ATTR onTimer() {
   portENTER_CRITICAL_ISR(&timerMux);
@@ -27,10 +27,10 @@ ChessPiece get_chess_piece_type(float voltage){
     // bunch of if statements for test voltages
     ChessPiece chesspiece;
     if (voltage <= 1.35){
-        chesspiece.piecetype = WHITE;
+        chesspiece.piecetype = BLACK;
     }
     else if (voltage >= 1.65){
-        chesspiece.piecetype = BLACK;
+        chesspiece.piecetype = WHITE;
     }
     else{
         chesspiece.piecetype = EMPTY;
