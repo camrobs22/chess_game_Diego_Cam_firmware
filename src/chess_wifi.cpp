@@ -1005,19 +1005,19 @@ bool parse_uci_move(const char* move, int& fromRow, int& fromCol, int& toRow, in
 
     char fromFile = move[0];
     char fromRank = move[1];
-    char toFile = move[2];
-    char toRank = move[3];
+    char toFile   = move[2];
+    char toRank   = move[3];
 
     if (fromFile < 'a' || fromFile > 'h') return false;
-    if (toFile < 'a' || toFile > 'h') return false;
+    if (toFile   < 'a' || toFile   > 'h') return false;
     if (fromRank < '1' || fromRank > '8') return false;
-    if (toRank < '1' || toRank > '8') return false;
+    if (toRank   < '1' || toRank   > '8') return false;
 
     fromCol = fromFile - 'a';
-    toCol = toFile - 'a';
+    toCol   = toFile - 'a';
 
     fromRow = '8' - fromRank;
-    toRow = '8' - toRank;
+    toRow   = '8' - toRank;
 
     return true;
 }
@@ -1032,7 +1032,6 @@ String build_move_string(const char* from, const char* to, const char* promotion
     }
 
     String move = String(from) + String(to);
-
     if (promotion != nullptr && strlen(promotion) > 0) {
         move += promotion[0];
     }
@@ -1089,7 +1088,6 @@ bool move_object_was_capture(JsonVariantConst moveObj) {
 
     const char* flags = moveObj["flags"];
     if (flags != nullptr) {
-        // chess.js flags include "c" for normal capture and "e" for en passant.
         return strchr(flags, 'c') != nullptr || strchr(flags, 'e') != nullptr;
     }
 
@@ -1198,6 +1196,7 @@ void handle_game_over_if_needed(JsonDocument& doc, int version) {
     bool isGameOver = status["isGameOver"] | false;
     bool isCheckmate = status["isCheckmate"] | false;
     bool isDraw = status["isDraw"] | false;
+    bool isStalemate = status["isStalemate"] | false;
 
     const char* statusName = status["status"];
     const char* winner = status["winner"];
@@ -1206,6 +1205,7 @@ void handle_game_over_if_needed(JsonDocument& doc, int version) {
     if (!isGameOver &&
         !isCheckmate &&
         !isDraw &&
+        !isStalemate &&
         (statusName == nullptr ||
          (strcmp(statusName, "checkmate") != 0 &&
           strcmp(statusName, "draw") != 0 &&
@@ -1236,7 +1236,7 @@ void handle_game_over_if_needed(JsonDocument& doc, int version) {
 
     last_status_message = reason == nullptr ? "Game over" : String(reason);
 
-    if (isDraw ||
+    if (isDraw || isStalemate ||
         (statusName != nullptr &&
          (strcmp(statusName, "draw") == 0 || strcmp(statusName, "stalemate") == 0))) {
         game_draw = true;
@@ -1302,7 +1302,6 @@ void handle_accepted_move(JsonDocument& doc, bool directAcceptedMessage) {
         return;
     }
 
-    // Browser, engine, or remote opponent move.
     queue_virtual_move(move, wasCapture);
 
     if (wasCapture) {
@@ -1478,7 +1477,6 @@ void handle_server_message(uint8_t* payload, size_t length) {
     if (strcmp(type, "move:accepted") == 0) {
         handle_accepted_move(doc, true);
     }
-
     else if (strcmp(type, "game:state") == 0) {
         if (!doc["acceptedMove"].isNull()) {
             handle_accepted_move(doc, false);
@@ -1488,26 +1486,21 @@ void handle_server_message(uint8_t* payload, size_t length) {
             handle_game_over_if_needed(doc, version);
         }
     }
-
     else if (strcmp(type, "game:over") == 0) {
         int version = doc["version"] | -1;
         handle_game_over_if_needed(doc, version);
     }
-
     else if (strcmp(type, "move:rejected") == 0) {
         handle_rejected_move(doc);
     }
-
     else if (strcmp(type, "move:virtualboard") == 0) {
         handle_legacy_virtual_move(doc);
     }
-
     else if (strcmp(type, "server:hello") == 0) {
         const char* message = doc["message"];
         Serial.print("Server hello: ");
         Serial.println(message == nullptr ? "" : message);
     }
-
     else if (strcmp(type, "error") == 0) {
         const char* message = doc["message"];
         Serial.print("Server error: ");
@@ -1518,7 +1511,6 @@ void handle_server_message(uint8_t* payload, size_t length) {
 
         show_invalid_move();
     }
-
     else {
         Serial.print("Unknown server message type: ");
         Serial.println(type);
@@ -1540,7 +1532,6 @@ void webSocketEvent(WStype_t type, uint8_t* payload, size_t length) {
             break;
 
         case WStype_TEXT:
-            // Do not print the full raw JSON here; game:state messages are huge.
             handle_server_message(payload, length);
             break;
 
@@ -1553,6 +1544,7 @@ void websocket_begin() {
     webSocket.begin(SERVER_IP, SERVER_PORT, "/");
     webSocket.onEvent(webSocketEvent);
     webSocket.setReconnectInterval(5000);
+    webSocket.enableHeartbeat(15000, 3000, 2);
 
     Serial.println("WebSocket client started");
 }
@@ -1689,3 +1681,4 @@ String get_last_capture_move() {
 void clear_last_capture_move() {
     last_capture_move = "";
 }
+
