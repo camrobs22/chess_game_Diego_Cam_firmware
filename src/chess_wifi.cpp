@@ -926,6 +926,15 @@ bool socketConnected = false;
 String virtual_move = "";
 bool virtual_move_was_capture = false;
 
+bool move_rejected = false;
+bool game_won = false;
+bool game_lost = false;
+bool game_draw = false;
+
+String last_status_message = "";
+String last_rejected_move = "";
+String last_capture_move = "";
+
 // Used to avoid showing the same accepted move twice when the server sends both
 // move:accepted and game:state for the same version.
 int lastHandledMoveVersion = -1;
@@ -994,21 +1003,21 @@ bool parse_uci_move(const char* move, int& fromRow, int& fromCol, int& toRow, in
         return false;
     }
 
-    char fromFile = move[0]; // e
-    char fromRank = move[1]; // 7
-    char toFile   = move[2]; // e
-    char toRank   = move[3]; // 5
+    char fromFile = move[0];
+    char fromRank = move[1];
+    char toFile = move[2];
+    char toRank = move[3];
 
     if (fromFile < 'a' || fromFile > 'h') return false;
-    if (toFile   < 'a' || toFile   > 'h') return false;
+    if (toFile < 'a' || toFile > 'h') return false;
     if (fromRank < '1' || fromRank > '8') return false;
-    if (toRank   < '1' || toRank   > '8') return false;
+    if (toRank < '1' || toRank > '8') return false;
 
     fromCol = fromFile - 'a';
-    toCol   = toFile - 'a';
+    toCol = toFile - 'a';
 
     fromRow = '8' - fromRank;
-    toRow   = '8' - toRank;
+    toRow = '8' - toRank;
 
     return true;
 }
@@ -1051,15 +1060,26 @@ String move_from_json(JsonVariantConst moveObj) {
         return String(move);
     }
 
+    const char* uci = moveObj["uci"];
+    if (uci != nullptr && strlen(uci) >= 4) {
+        return String(uci);
+    }
+
     const char* from = moveObj["from"];
     const char* to = moveObj["to"];
     const char* promotion = moveObj["promotion"];
+
     return build_move_string(from, to, promotion);
 }
 
 bool move_object_was_capture(JsonVariantConst moveObj) {
     if (moveObj.isNull()) {
         return false;
+    }
+
+    bool isCapture = moveObj["isCapture"] | false;
+    if (isCapture) {
+        return true;
     }
 
     const char* captured = moveObj["captured"];
@@ -1081,12 +1101,27 @@ bool root_was_capture(JsonDocument& doc) {
         return doc["captured"].as<bool>();
     }
 
+    bool isCapture = doc["isCapture"] | false;
+    if (isCapture) {
+        return true;
+    }
+
     const char* captured = doc["captured"];
     if (captured != nullptr && strlen(captured) > 0) {
         return true;
     }
 
     return move_object_was_capture(doc["acceptedMove"]);
+}
+
+bool is_physical_source(const char* source) {
+    if (source == nullptr) {
+        return false;
+    }
+
+    return strcmp(source, "physicalboard") == 0 ||
+           strcmp(source, "esp32") == 0 ||
+           strcmp(source, "physical") == 0;
 }
 
 void queue_virtual_move(String move, bool wasCapture) {
@@ -1096,6 +1131,61 @@ void queue_virtual_move(String move, bool wasCapture) {
 
     virtual_move = move;
     virtual_move_was_capture = wasCapture;
+
+    if (wasCapture) {
+        last_capture_move = move;
+    }
+
+    Serial.print("Queued virtual move for physical board: ");
+    Serial.print(virtual_move);
+    Serial.print(" capture=");
+    Serial.println(wasCapture ? "yes" : "no");
+}
+
+void print_clean_move_summary(JsonDocument& doc, const String& move, bool wasCapture, const char* source) {
+    JsonVariantConst acceptedMove = doc["acceptedMove"];
+
+    const char* color = acceptedMove["color"];
+    if (color == nullptr) {
+        color = doc["color"];
+    }
+
+    const char* san = acceptedMove["san"];
+    const char* piece = acceptedMove["piece"];
+
+    Serial.println("----- Accepted move -----");
+
+    Serial.print("Move: ");
+    Serial.println(move);
+
+    Serial.print("Source: ");
+    Serial.println(source == nullptr ? "unknown" : source);
+
+    Serial.print("Color move: ");
+    if (color != nullptr && strcmp(color, "w") == 0) {
+        Serial.println("white");
+    }
+    else if (color != nullptr && strcmp(color, "b") == 0) {
+        Serial.println("black");
+    }
+    else {
+        Serial.println("unknown");
+    }
+
+    if (san != nullptr) {
+        Serial.print("SAN: ");
+        Serial.println(san);
+    }
+
+    if (piece != nullptr) {
+        Serial.print("Piece: ");
+        Serial.println(piece);
+    }
+
+    Serial.print("Capture: ");
+    Serial.println(wasCapture ? "yes" : "no");
+
+    Serial.println("-------------------------");
 }
 
 void handle_game_over_if_needed(JsonDocument& doc, int version) {
@@ -1106,10 +1196,20 @@ void handle_game_over_if_needed(JsonDocument& doc, int version) {
     }
 
     bool isGameOver = status["isGameOver"] | false;
-    const char* statusName = status["status"];
+    bool isCheckmate = status["isCheckmate"] | false;
+    bool isDraw = status["isDraw"] | false;
 
-    if (!isGameOver && (statusName == nullptr ||
-        (strcmp(statusName, "checkmate") != 0 && strcmp(statusName, "draw") != 0))) {
+    const char* statusName = status["status"];
+    const char* winner = status["winner"];
+    const char* reason = status["reason"];
+
+    if (!isGameOver &&
+        !isCheckmate &&
+        !isDraw &&
+        (statusName == nullptr ||
+         (strcmp(statusName, "checkmate") != 0 &&
+          strcmp(statusName, "draw") != 0 &&
+          strcmp(statusName, "stalemate") != 0))) {
         return;
     }
 
@@ -1121,23 +1221,41 @@ void handle_game_over_if_needed(JsonDocument& doc, int version) {
         lastHandledGameOverVersion = version;
     }
 
-    const char* winner = status["winner"];
-    const char* reason = status["reason"];
+    Serial.println("----- Game over -----");
 
-    Serial.print("Game over received. Status: ");
-    Serial.print(statusName == nullptr ? "unknown" : statusName);
-    Serial.print(" reason: ");
+    Serial.print("Status: ");
+    Serial.println(statusName == nullptr ? "unknown" : statusName);
+
+    Serial.print("Reason: ");
     Serial.println(reason == nullptr ? "none" : reason);
 
-    if (statusName != nullptr && strcmp(statusName, "draw") == 0) {
+    Serial.print("Winner: ");
+    Serial.println(winner == nullptr ? "none" : winner);
+
+    Serial.println("---------------------");
+
+    last_status_message = reason == nullptr ? "Game over" : String(reason);
+
+    if (isDraw ||
+        (statusName != nullptr &&
+         (strcmp(statusName, "draw") == 0 || strcmp(statusName, "stalemate") == 0))) {
+        game_draw = true;
+        game_won = false;
+        game_lost = false;
         show_draw_animation();
         return;
     }
 
     if (winner != nullptr && strcmp(winner, PHYSICAL_PLAYER_COLOR) == 0) {
+        game_won = true;
+        game_lost = false;
+        game_draw = false;
         show_win_animation();
     }
     else {
+        game_won = false;
+        game_lost = true;
+        game_draw = false;
         show_loss_animation();
     }
 }
@@ -1151,6 +1269,7 @@ void handle_accepted_move(JsonDocument& doc, bool directAcceptedMessage) {
     }
 
     JsonVariantConst acceptedMove = doc["acceptedMove"];
+
     String move = move_from_json(acceptedMove);
 
     if (move.length() < 4) {
@@ -1161,51 +1280,76 @@ void handle_accepted_move(JsonDocument& doc, bool directAcceptedMessage) {
     }
 
     if (move.length() < 4) {
-        Serial.println("Accepted move message did not include a parseable move");
+        Serial.println("Accepted move message did not include a parseable move.");
         handle_game_over_if_needed(doc, version);
         return;
     }
 
     bool wasCapture = root_was_capture(doc);
-    const char* source = doc["source"];
-    bool fromPhysicalBoard = source != nullptr && strcmp(source, "physicalboard") == 0;
 
-    Serial.print("Accepted move parsed: ");
-    Serial.print(move);
-    Serial.print(" source=");
-    Serial.print(source == nullptr ? "unknown" : source);
-    Serial.print(" capture=");
-    Serial.println(wasCapture ? "yes" : "no");
+    const char* source = doc["source"];
+    bool fromPhysicalBoard = is_physical_source(source);
+
+    print_clean_move_summary(doc, move, wasCapture, source);
 
     if (version >= 0) {
         lastHandledMoveVersion = version;
     }
 
-    // If the move came from the browser/remote side, the physical board needs to
-    // show the human where to move the opponent's piece.
-    if (!fromPhysicalBoard) {
-        queue_virtual_move(move, wasCapture);
+    if (fromPhysicalBoard) {
+        Serial.println("Accepted physical board move; not queueing LEDs.");
+        handle_game_over_if_needed(doc, version);
+        return;
     }
 
-    // Capture indication: destination square is shown in red/orange.
-    // For non-capture virtual/browser moves, show the normal blue move LEDs.
+    // Browser, engine, or remote opponent move.
+    queue_virtual_move(move, wasCapture);
+
     if (wasCapture) {
         show_capture_move(move);
     }
-    // else if (!fromPhysicalBoard || directAcceptedMessage) {
-    //     show_move(move);
-    // }
+    else {
+        show_move(move);
+    }
 
     handle_game_over_if_needed(doc, version);
 }
 
 void handle_rejected_move(JsonDocument& doc) {
     const char* reason = doc["reason"];
+    if (reason == nullptr) {
+        reason = doc["message"];
+    }
 
-    Serial.print("Move rejected by server: ");
+    Serial.println("----- Move rejected -----");
+
+    Serial.print("Reason: ");
     Serial.println(reason == nullptr ? "unknown reason" : reason);
 
-    // Invalid move indication: red double flash.
+    String rejectedMove = move_from_json(doc["attemptedMove"]);
+
+    if (rejectedMove.length() < 4) {
+        rejectedMove = move_from_json(doc["attemptedMessage"]);
+    }
+
+    if (rejectedMove.length() < 4) {
+        const char* moveStr = doc["move"];
+        if (moveStr != nullptr) {
+            rejectedMove = String(moveStr);
+        }
+    }
+
+    if (rejectedMove.length() >= 4) {
+        Serial.print("Rejected move: ");
+        Serial.println(rejectedMove);
+        last_rejected_move = rejectedMove;
+    }
+
+    Serial.println("-------------------------");
+
+    move_rejected = true;
+    last_status_message = reason == nullptr ? "Move rejected" : String(reason);
+
     show_invalid_move();
 }
 
@@ -1213,7 +1357,7 @@ void handle_legacy_virtual_move(JsonDocument& doc) {
     const char* move = doc["move"];
 
     if (move == nullptr) {
-        Serial.println("Virtual board message missing move");
+        Serial.println("Virtual board message missing move.");
         return;
     }
 
@@ -1227,53 +1371,90 @@ void handle_legacy_virtual_move(JsonDocument& doc) {
     if (parse_uci_move(move, fromRow, fromCol, toRow, toCol)) {
         Serial.printf(
             "Parsed virtual move: from row %i col %i to row %i col %i\r\n",
-            fromRow, fromCol, toRow, toCol
+            fromRow,
+            fromCol,
+            toRow,
+            toCol
         );
 
         show_move(String(move));
-    } else {
-        Serial.println("Invalid move format");
+    }
+    else {
+        Serial.println("Invalid virtual move format.");
     }
 }
 
 DeserializationError parse_server_json(JsonDocument& doc, uint8_t* payload, size_t length) {
-    // Filter lets us parse large game:state messages without storing the whole
-    // board, history, legalMoves array, etc. This is much safer on the ESP32.
-    StaticJsonDocument<768> filter;
+    StaticJsonDocument<1024> filter;
+
     filter["type"] = true;
     filter["version"] = true;
     filter["source"] = true;
     filter["move"] = true;
+    filter["color"] = true;
     filter["captured"] = true;
+    filter["isCapture"] = true;
     filter["reason"] = true;
     filter["message"] = true;
+
+    filter["attemptedMove"]["from"] = true;
+    filter["attemptedMove"]["to"] = true;
+    filter["attemptedMove"]["lan"] = true;
+    filter["attemptedMove"]["move"] = true;
+    filter["attemptedMove"]["uci"] = true;
+    filter["attemptedMove"]["promotion"] = true;
+
+    filter["attemptedMessage"]["from"] = true;
+    filter["attemptedMessage"]["to"] = true;
+    filter["attemptedMessage"]["lan"] = true;
+    filter["attemptedMessage"]["move"] = true;
+    filter["attemptedMessage"]["uci"] = true;
+    filter["attemptedMessage"]["promotion"] = true;
 
     filter["acceptedMove"]["from"] = true;
     filter["acceptedMove"]["to"] = true;
     filter["acceptedMove"]["lan"] = true;
     filter["acceptedMove"]["move"] = true;
+    filter["acceptedMove"]["uci"] = true;
     filter["acceptedMove"]["captured"] = true;
+    filter["acceptedMove"]["isCapture"] = true;
     filter["acceptedMove"]["flags"] = true;
     filter["acceptedMove"]["promotion"] = true;
     filter["acceptedMove"]["san"] = true;
+    filter["acceptedMove"]["piece"] = true;
+    filter["acceptedMove"]["color"] = true;
 
     filter["lastMove"]["from"] = true;
     filter["lastMove"]["to"] = true;
     filter["lastMove"]["lan"] = true;
+    filter["lastMove"]["move"] = true;
+    filter["lastMove"]["uci"] = true;
     filter["lastMove"]["captured"] = true;
+    filter["lastMove"]["isCapture"] = true;
     filter["lastMove"]["flags"] = true;
     filter["lastMove"]["promotion"] = true;
+    filter["lastMove"]["san"] = true;
+    filter["lastMove"]["piece"] = true;
+    filter["lastMove"]["color"] = true;
 
     filter["status"]["status"] = true;
     filter["status"]["winner"] = true;
     filter["status"]["winnerName"] = true;
     filter["status"]["result"] = true;
     filter["status"]["reason"] = true;
+    filter["status"]["turn"] = true;
+    filter["status"]["turnName"] = true;
     filter["status"]["isGameOver"] = true;
     filter["status"]["isCheckmate"] = true;
     filter["status"]["isDraw"] = true;
+    filter["status"]["isStalemate"] = true;
 
-    return deserializeJson(doc, payload, length, DeserializationOption::Filter(filter));
+    return deserializeJson(
+        doc,
+        payload,
+        length,
+        DeserializationOption::Filter(filter)
+    );
 }
 
 void handle_server_message(uint8_t* payload, size_t length) {
@@ -1290,7 +1471,7 @@ void handle_server_message(uint8_t* payload, size_t length) {
     const char* type = doc["type"];
 
     if (type == nullptr) {
-        Serial.println("Message missing type");
+        Serial.println("Message missing type.");
         return;
     }
 
@@ -1331,6 +1512,10 @@ void handle_server_message(uint8_t* payload, size_t length) {
         const char* message = doc["message"];
         Serial.print("Server error: ");
         Serial.println(message == nullptr ? "unknown" : message);
+
+        last_status_message = message == nullptr ? "Server error" : String(message);
+        move_rejected = true;
+
         show_invalid_move();
     }
 
@@ -1355,9 +1540,7 @@ void webSocketEvent(WStype_t type, uint8_t* payload, size_t length) {
             break;
 
         case WStype_TEXT:
-            Serial.print("Message from server: ");
-            Serial.write(payload, length);
-            Serial.println();
+            // Do not print the full raw JSON here; game:state messages are huge.
             handle_server_message(payload, length);
             break;
 
@@ -1391,7 +1574,6 @@ void send_hello_to_server() {
     webSocket.sendTXT("{\"type\":\"esp32:hello\",\"message\":\"manual hello from ESP32\"}");
 }
 
-// helper functions to convert row and col to and from to a full move
 String square_to_chess_notation(int row, int col) {
     char file = 'a' + col;
     char rank = '8' - row;
@@ -1403,7 +1585,6 @@ String square_to_chess_notation(int row, int col) {
     return square;
 }
 
-// see above comment
 String move_to_uci(int fromRow, int fromCol, int toRow, int toCol) {
     return square_to_chess_notation(fromRow, fromCol) +
            square_to_chess_notation(toRow, toCol);
@@ -1411,28 +1592,29 @@ String move_to_uci(int fromRow, int fromCol, int toRow, int toCol) {
 
 void send_board_move(int from_row, int from_col, int to_row, int to_col) {
     if (!socketConnected) {
-        Serial.println("Cannot send move: WebSocket not connected");
+        Serial.println("Cannot send move: WebSocket not connected.");
+        move_rejected = true;
+        last_status_message = "WebSocket not connected";
         show_invalid_move();
         return;
     }
 
-    // convert indexes to a move
     String move = move_to_uci(from_row, from_col, to_row, to_col);
-    // make move into a json message to send to server
-    StaticJsonDocument<384> message;
+
+    StaticJsonDocument<512> message;
 
     message["type"] = "move:physicalboard";
+    message["source"] = "esp32";
     message["move"] = move;
+
     message["from_row"] = from_row;
     message["from_col"] = from_col;
     message["to_row"] = to_row;
     message["to_col"] = to_col;
 
-    // Newer server parser also accepts nested from/to fields.
     message["from"] = square_to_chess_notation(from_row, from_col);
     message["to"] = square_to_chess_notation(to_row, to_col);
 
-    // make json output
     String output;
     serializeJson(message, output);
 
@@ -1442,15 +1624,68 @@ void send_board_move(int from_row, int from_col, int to_row, int to_col) {
     webSocket.sendTXT(output);
 }
 
-String get_virtual_move(){
+String get_virtual_move() {
     return virtual_move;
 }
 
-bool get_virtual_move_was_capture(){
+bool get_virtual_move_was_capture() {
     return virtual_move_was_capture;
 }
 
-void clear_virtual_move(){
+void clear_virtual_move() {
     virtual_move = "";
     virtual_move_was_capture = false;
+}
+
+void clear_move_rejected() {
+    move_rejected = false;
+    last_rejected_move = "";
+}
+
+bool was_move_rejected() {
+    return move_rejected;
+}
+
+bool was_game_won() {
+    return game_won;
+}
+
+void clear_game_won() {
+    game_won = false;
+}
+
+bool was_game_lost() {
+    return game_lost;
+}
+
+void clear_game_lost() {
+    game_lost = false;
+}
+
+bool was_game_draw() {
+    return game_draw;
+}
+
+void clear_game_draw() {
+    game_draw = false;
+}
+
+String get_last_status_message() {
+    return last_status_message;
+}
+
+void clear_last_status_message() {
+    last_status_message = "";
+}
+
+String get_last_rejected_move() {
+    return last_rejected_move;
+}
+
+String get_last_capture_move() {
+    return last_capture_move;
+}
+
+void clear_last_capture_move() {
+    last_capture_move = "";
 }
