@@ -10,7 +10,8 @@ void hall_init(){
   pinMode(HALL_PIN4, INPUT);
   pinMode(HALL_PIN5, INPUT);
   pinMode(HALL_PIN6, INPUT);
-  // pinMode(HALL_PIN7, INPUT);
+  pinMode(HALL_PIN7, INPUT);
+  pinMode(HALL_PIN8, INPUT);
 
 
   pinMode(ENABLE1, OUTPUT);
@@ -33,7 +34,7 @@ void hall_init(){
 }
 
 void test_hall(){
-  digitalWrite(ENABLE1, HIGH);
+  digitalWrite(ENABLE4, HIGH);
   int hall1 = analogRead(HALL_PIN1);
 //   delayMicroseconds(100);
 //   digitalWrite(ENABLE1, LOW);
@@ -47,19 +48,19 @@ void test_hall(){
 //   digitalWrite(ENABLE3, LOW);
 //   digitalWrite(ENABLE4, HIGH);
   int hall4 = analogRead(HALL_PIN4);
-  int hall5 = analogRead(HALL_PIN5);
-  int hall6 = analogRead(HALL_PIN6);
+  // int hall5 = analogRead(HALL_PIN5);
+  // int hall6 = analogRead(HALL_PIN6);
   //int hall7 = analogRead(HALL_PIN7);
 //   delayMicroseconds(100);
-  digitalWrite(ENABLE1, LOW);
+  digitalWrite(ENABLE4, LOW);
   float hall1_volt = hall1/4095.0 * 3.3;
   float hall2_volt = hall2/4095.0 * 3.3;
   float hall3_volt = hall3/4095.0 * 3.3;
   float hall4_volt = hall4/4095.0 * 3.3;
-  float hall5_volt = hall5/4095.0 * 3.3;
-  float hall6_volt = hall6/4095.0 * 3.3;
+  // float hall5_volt = hall5/4095.0 * 3.3;
+  // float hall6_volt = hall6/4095.0 * 3.3;
   //float hall7_volt = hall7/4095.0 * 3.3;
-  Serial.printf("H1=%f H2=%f H3=%f H4=%f H5=%f H6=%f\r\n", hall1_volt, hall2_volt, hall3_volt, hall4_volt, hall5_volt, hall6_volt);
+  Serial.printf("H1=%f H2=%f H3=%f H4=%f\r\n", hall1_volt, hall2_volt, hall3_volt, hall4_volt);
 }
 
 // returns the voltages of a row of hall sensors in row_volts

@@ -30,10 +30,10 @@
 
 // LED decleration
 #define NUM_LEDS 25
-#define DIN1_PIN 13
-#define DIN3_PIN 19
-#define DIN2_PIN 18
-#define DIN4_PIN 17
+#define DIN1_PIN 21
+#define DIN3_PIN 38
+#define DIN2_PIN 39
+#define DIN4_PIN 40
 
 
 void leds_init();

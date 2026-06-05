@@ -904,6 +904,7 @@
 //     return move_rejected;
 // }
 
+
 #include "chess_wifi.h"
 #include "leds.h"
 
@@ -935,7 +936,7 @@ String last_status_message = "";
 String last_rejected_move = "";
 String last_capture_move = "";
 
-// Used to avoid showing the same accepted move twice when the server sends both
+// Used to avoid handling the same accepted move twice when the server sends both
 // move:accepted and game:state for the same version.
 int lastHandledMoveVersion = -1;
 int lastHandledGameOverVersion = -1;
@@ -1032,6 +1033,7 @@ String build_move_string(const char* from, const char* to, const char* promotion
     }
 
     String move = String(from) + String(to);
+
     if (promotion != nullptr && strlen(promotion) > 0) {
         move += promotion[0];
     }
@@ -1238,10 +1240,11 @@ void handle_game_over_if_needed(JsonDocument& doc, int version) {
 
     if (isDraw || isStalemate ||
         (statusName != nullptr &&
-         (strcmp(statusName, "draw") == 0 || strcmp(statusName, "stalemate") == 0))) {
+        (strcmp(statusName, "draw") == 0 || strcmp(statusName, "stalemate") == 0))) {
         game_draw = true;
         game_won = false;
         game_lost = false;
+
         show_draw_animation();
         return;
     }
@@ -1250,12 +1253,14 @@ void handle_game_over_if_needed(JsonDocument& doc, int version) {
         game_won = true;
         game_lost = false;
         game_draw = false;
+
         show_win_animation();
     }
     else {
         game_won = false;
         game_lost = true;
         game_draw = false;
+
         show_loss_animation();
     }
 }
@@ -1544,7 +1549,6 @@ void websocket_begin() {
     webSocket.begin(SERVER_IP, SERVER_PORT, "/");
     webSocket.onEvent(webSocketEvent);
     webSocket.setReconnectInterval(5000);
-    webSocket.enableHeartbeat(15000, 3000, 2);
 
     Serial.println("WebSocket client started");
 }

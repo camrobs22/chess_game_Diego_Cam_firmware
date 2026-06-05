@@ -282,13 +282,19 @@ void set_led(int idx, int board_idx){
 }
 
 void test_led(){
-  for (int board = 0; board < 4; board++){
-    for (int i = 0; i < 25; i++){
-      FastLED.clear();
-      ledBoards[board][i] = CRGB::Red;
-      FastLED.show();
-      delay(200);
-    }
+  // for (int board = 0; board < 4; board++){
+  //   for (int i = 0; i < 25; i++){
+  //     FastLED.clear();
+  //     ledBoards[board][i] = CRGB::Red;
+  //     FastLED.show();
+  //     delay(200);
+  //   }
+  // }
+  for (int i = 0; i < 25; i++){
+    FastLED.clear();
+    ledBoards[0][i] = CRGB::Red;
+    FastLED.show();
+    delay(200);
   }
   return;
 }

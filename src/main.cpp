@@ -884,322 +884,323 @@ void setup()
   leds_init();
   setup_state();
 
-#if ENABLE_NETWORK_GAME
-  bool connected = wifi_connect();
+// #if ENABLE_NETWORK_GAME
+//   bool connected = wifi_connect();
 
-  if (!connected)
-  {
-    Serial.println("WiFi failed. Continuing without server/LED game events.");
-  }
-  else
-  {
-    bool serverOk = test_server_http();
+//   if (!connected)
+//   {
+//     Serial.println("WiFi failed. Continuing without server/LED game events.");
+//   }
+//   else
+//   {
+//     bool serverOk = test_server_http();
 
-    if (!serverOk)
-    {
-      Serial.println("HTTP test failed. Starting WebSocket anyway so reconnect can keep trying.");
-    }
+//     if (!serverOk)
+//     {
+//       Serial.println("HTTP test failed. Starting WebSocket anyway so reconnect can keep trying.");
+//     }
 
-    websocket_begin();
-    networkGameStarted = true;
-  }
-#endif
+//     websocket_begin();
+//     networkGameStarted = true;
+//   }
+// #endif
 }
 
 void loop()
 {
-  service_network();
+  test_led();
+  // test_hall();
+  // delayMicroseconds(100);
+  // service_network();
 
-  if (gameOverMode) {
-    return;
-  }
+  // if (gameOverMode) {
+  //   return;
+  // }
 
-  if (was_game_won() || was_game_lost() || was_game_draw()) {
-    Serial.println("Game over flag received. Stopping board move detection.");
-    gameOverMode = true;
-    return;
-  }
+  // if (was_game_won() || was_game_lost() || was_game_draw()) {
+  //   Serial.println("Game over flag received. Stopping board move detection.");
+  //   gameOverMode = true;
+  //   return;
+  // }
 
-  if (!ready_for_state_update())
-  {
-    return;
-  }
+  // if (!ready_for_state_update())
+  // {
+  //   return;
+  // }
 
-  update_state();
+  // update_state();
 
-  if (!board_scan_complete())
-  {
-    return;
-  }
+  // if (!board_scan_complete())
+  // {
+  //   return;
+  // }
 
-  bool same = true;
+  // bool same = true;
 
-  if (physicalplayer_turn)
-  {
-    int fromRow = -1;
-    int fromCol = -1;
-    int toRow = -1;
-    int toCol = -1;
+  // if (physicalplayer_turn)
+  // {
+  //   int fromRow = -1;
+  //   int fromCol = -1;
+  //   int toRow = -1;
+  //   int toCol = -1;
 
-    int changedCount = 0;
+  //   int changedCount = 0;
 
-    for (int r = 0; r < 8; r++)
-    {
-      for (int c = 0; c < 8; c++)
-      {
-        PieceType pastPiece = GameState.past_state[r][c].piecetype;
-        PieceType curPiece = GameState.cur_state[r][c].piecetype;
+  //   for (int r = 0; r < 8; r++)
+  //   {
+  //     for (int c = 0; c < 8; c++)
+  //     {
+  //       PieceType pastPiece = GameState.past_state[r][c].piecetype;
+  //       PieceType curPiece = GameState.cur_state[r][c].piecetype;
 
-        if (curPiece != pastPiece)
-        {
-          same = false;
-          changedCount++;
+  //       if (curPiece != pastPiece)
+  //       {
+  //         same = false;
+  //         changedCount++;
 
-          Serial.printf(
-            "Change detected at row %i col %i: past=%i cur=%i\r\n",
-            r,
-            c,
-            pastPiece,
-            curPiece
-          );
+  //         Serial.printf(
+  //           "Change detected at row %i col %i: past=%i cur=%i\r\n",
+  //           r,
+  //           c,
+  //           pastPiece,
+  //           curPiece
+  //         );
 
-          if (pastPiece != EMPTY && curPiece == EMPTY)
-          {
-            fromRow = r;
-            fromCol = c;
-          }
-          else if (pastPiece == EMPTY && curPiece != EMPTY)
-          {
-            toRow = r;
-            toCol = c;
-          }
-          else if (pastPiece != EMPTY && curPiece != EMPTY && pastPiece != curPiece)
-          {
-            toRow = r;
-            toCol = c;
-          }
-        }
-      }
-    }
+  //         if (pastPiece != EMPTY && curPiece == EMPTY)
+  //         {
+  //           fromRow = r;
+  //           fromCol = c;
+  //         }
+  //         else if (pastPiece == EMPTY && curPiece != EMPTY)
+  //         {
+  //           toRow = r;
+  //           toCol = c;
+  //         }
+  //         else if (pastPiece != EMPTY && curPiece != EMPTY && pastPiece != curPiece)
+  //         {
+  //           toRow = r;
+  //           toCol = c;
+  //         }
+  //       }
+  //     }
+  //   }
 
-    if (same)
-    {
-      if (invalidMoveMode)
-      {
-        clear_leds();
-        invalidMoveMode = false;
-        Serial.println("Invalid move was undone. LEDs cleared.");
-      }
+  //   if (same)
+  //   {
+  //     if (invalidMoveMode)
+  //     {
+  //       clear_leds();
+  //       invalidMoveMode = false;
+  //       Serial.println("Invalid move was undone. LEDs cleared.");
+  //     }
 
-      return;
-    }
+  //     return;
+  //   }
 
-    if (valid_game_update())
-    {
-      Serial.printf(
-        "Game state update valid, move has been made! Piece was moved from row: %i col: %i to row: %i col: %i\r\n",
-        fromRow,
-        fromCol,
-        toRow,
-        toCol
-      );
+  //   if (valid_game_update())
+  //   {
+  //     Serial.printf(
+  //       "Game state update valid, move has been made! Piece was moved from row: %i col: %i to row: %i col: %i\r\n",
+  //       fromRow,
+  //       fromCol,
+  //       toRow,
+  //       toCol
+  //     );
 
-      clear_move_rejected();
-      clear_virtual_move();
+  //     clear_move_rejected();
+  //     clear_virtual_move();
 
-      send_board_move(fromRow, fromCol, toRow, toCol);
+  //     send_board_move(fromRow, fromCol, toRow, toCol);
 
-      unsigned long waitStart = millis();
-      bool rejected = false;
+  //     unsigned long waitStart = millis();
+  //     bool rejected = false;
 
-      while (millis() - waitStart < 1500)
-      {
-        service_network();
+  //     while (millis() - waitStart < 1500)
+  //     {
+  //       service_network();
 
-        if (was_move_rejected())
-        {
-          rejected = true;
-          clear_move_rejected();
-          break;
-        }
+  //       if (was_move_rejected())
+  //       {
+  //         rejected = true;
+  //         clear_move_rejected();
+  //         break;
+  //       }
 
-        if (was_game_won() || was_game_lost() || was_game_draw()) {
-          break;
-        }
+  //       if (was_game_won() || was_game_lost() || was_game_draw()) {
+  //         break;
+  //       }
 
-        delay(10);
-      }
+  //       delay(10);
+  //     }
 
-      if (rejected)
-      {
-        Serial.println("Not a valid move. Move the piece back and redo your turn.");
+  //     if (rejected)
+  //     {
+  //       Serial.println("Not a valid move. Move the piece back and redo your turn.");
 
-        show_invalid_move();
-        invalidMoveMode = true;
+  //       show_invalid_move();
+  //       invalidMoveMode = true;
 
-        // Do NOT commit the invalid board state.
-        return;
-      }
+  //       // Do NOT commit the invalid board state.
+  //       return;
+  //     }
 
-      if (invalidMoveMode)
-      {
-        clear_leds();
-        invalidMoveMode = false;
-      }
+  //     if (invalidMoveMode)
+  //     {
+  //       clear_leds();
+  //       invalidMoveMode = false;
+  //     }
 
-      commit_state();
+  //     commit_state();
 
-      if (was_game_won() || was_game_lost() || was_game_draw()) {
-        Serial.println("Move ended the game. Not waiting for virtual response.");
-        gameOverMode = true;
-        return;
-      }
+  //     if (was_game_won() || was_game_lost() || was_game_draw()) {
+  //       Serial.println("Move ended the game. Not waiting for virtual response.");
+  //       gameOverMode = true;
+  //       return;
+  //     }
 
-      wait_for_virtual_move_after_physical_move();
-    }
-    else
-    {
-      Serial.printf(
-        "Board changed, but move is not complete yet. From row/col = %i %i To row/col = %i %i\r\n",
-        fromRow,
-        fromCol,
-        toRow,
-        toCol
-      );
-    }
-  }
+  //     wait_for_virtual_move_after_physical_move();
+  //   }
+  //   else
+  //   {
+  //     Serial.printf(
+  //       "Board changed, but move is not complete yet. From row/col = %i %i To row/col = %i %i\r\n",
+  //       fromRow,
+  //       fromCol,
+  //       toRow,
+  //       toCol
+  //     );
+  //   }
+  // }
 
-  else
-  {
-    int fromRow = -1;
-    int fromCol = -1;
-    int toRow = -1;
-    int toCol = -1;
+  // else
+  // {
+  //   int fromRow = -1;
+  //   int fromCol = -1;
+  //   int toRow = -1;
+  //   int toCol = -1;
 
-    int changedCount = 0;
-    bool same = true;
+  //   int changedCount = 0;
+  //   bool same = true;
 
-    for (int r = 0; r < 8; r++)
-    {
-      for (int c = 0; c < 8; c++)
-      {
-        PieceType pastPiece = GameState.past_state[r][c].piecetype;
-        PieceType curPiece = GameState.cur_state[r][c].piecetype;
+  //   for (int r = 0; r < 8; r++)
+  //   {
+  //     for (int c = 0; c < 8; c++)
+  //     {
+  //       PieceType pastPiece = GameState.past_state[r][c].piecetype;
+  //       PieceType curPiece = GameState.cur_state[r][c].piecetype;
 
-        if (curPiece != pastPiece)
-        {
-          same = false;
-          changedCount++;
+  //       if (curPiece != pastPiece)
+  //       {
+  //         same = false;
+  //         changedCount++;
 
-          Serial.printf(
-            "Virtual response change detected at row %i col %i: past=%i cur=%i\r\n",
-            r,
-            c,
-            pastPiece,
-            curPiece
-          );
+  //         Serial.printf(
+  //           "Virtual response change detected at row %i col %i: past=%i cur=%i\r\n",
+  //           r,
+  //           c,
+  //           pastPiece,
+  //           curPiece
+  //         );
 
-          if (pastPiece != EMPTY && curPiece == EMPTY)
-          {
-            fromRow = r;
-            fromCol = c;
-          }
-          else if (pastPiece == EMPTY && curPiece != EMPTY)
-          {
-            toRow = r;
-            toCol = c;
-          }
-          else if (pastPiece != EMPTY && curPiece != EMPTY && pastPiece != curPiece)
-          {
-            toRow = r;
-            toCol = c;
-          }
-        }
-      }
-    }
+  //         if (pastPiece != EMPTY && curPiece == EMPTY)
+  //         {
+  //           fromRow = r;
+  //           fromCol = c;
+  //         }
+  //         else if (pastPiece == EMPTY && curPiece != EMPTY)
+  //         {
+  //           toRow = r;
+  //           toCol = c;
+  //         }
+  //         else if (pastPiece != EMPTY && curPiece != EMPTY && pastPiece != curPiece)
+  //         {
+  //           toRow = r;
+  //           toCol = c;
+  //         }
+  //       }
+  //     }
+  //   }
 
-    if (same)
-    {
-      return;
-    }
+  //   if (same)
+  //   {
+  //     return;
+  //   }
 
-    if (board_matches_past_state())
-    {
-      Serial.println("Board returned to previous state. Keep showing expected virtual move.");
+  //   if (board_matches_past_state())
+  //   {
+  //     Serial.println("Board returned to previous state. Keep showing expected virtual move.");
 
-      if (expectedVirtualMove != "") {
-        show_move(expectedVirtualMove);
-      }
+  //     if (expectedVirtualMove != "") {
+  //       show_move(expectedVirtualMove);
+  //     }
 
-      return;
-    }
+  //     return;
+  //   }
 
-    if (valid_game_update())
-    {
-      Serial.printf(
-        "Human moved virtual piece from row %i col %i to row %i col %i\r\n",
-        fromRow,
-        fromCol,
-        toRow,
-        toCol
-      );
+  //   if (valid_game_update())
+  //   {
+  //     Serial.printf(
+  //       "Human moved virtual piece from row %i col %i to row %i col %i\r\n",
+  //       fromRow,
+  //       fromCol,
+  //       toRow,
+  //       toCol
+  //     );
 
-      bool moveMatches =
-        fromRow == expectedFromRow &&
-        fromCol == expectedFromCol &&
-        toRow == expectedToRow &&
-        toCol == expectedToCol;
+  //     bool moveMatches =
+  //       fromRow == expectedFromRow &&
+  //       fromCol == expectedFromCol &&
+  //       toRow == expectedToRow &&
+  //       toCol == expectedToCol;
 
-      if (moveMatches)
-      {
-        Serial.println("Correct virtual move completed physically.");
+  //     if (moveMatches)
+  //     {
+  //       Serial.println("Correct virtual move completed physically.");
 
-        commit_state();
+  //       commit_state();
 
-        clear_leds();
+  //       clear_leds();
 
-        reset_expected_virtual_move();
+  //       reset_expected_virtual_move();
 
-        physicalplayer_turn = true;
-      }
-      else
-      {
-        Serial.println("Wrong move made for virtual response. Put it back or complete the highlighted move.");
+  //       physicalplayer_turn = true;
+  //     }
+  //     else
+  //     {
+  //       Serial.println("Wrong move made for virtual response. Put it back or complete the highlighted move.");
 
-        Serial.printf(
-          "Expected from row %i col %i to row %i col %i\r\n",
-          expectedFromRow,
-          expectedFromCol,
-          expectedToRow,
-          expectedToCol
-        );
+  //       Serial.printf(
+  //         "Expected from row %i col %i to row %i col %i\r\n",
+  //         expectedFromRow,
+  //         expectedFromCol,
+  //         expectedToRow,
+  //         expectedToCol
+  //       );
 
-        Serial.printf(
-          "Actual from row %i col %i to row %i col %i\r\n",
-          fromRow,
-          fromCol,
-          toRow,
-          toCol
-        );
+  //       Serial.printf(
+  //         "Actual from row %i col %i to row %i col %i\r\n",
+  //         fromRow,
+  //         fromCol,
+  //         toRow,
+  //         toCol
+  //       );
 
-        if (expectedVirtualMove != "") {
-          show_move(expectedVirtualMove);
-        }
+  //       if (expectedVirtualMove != "") {
+  //         show_move(expectedVirtualMove);
+  //       }
 
-        return;
-      }
-    }
-    else
-    {
-      Serial.println("Virtual move is not complete yet. Keep LEDs on.");
+  //       return;
+  //     }
+  //   }
+  //   else
+  //   {
+  //     Serial.println("Virtual move is not complete yet. Keep LEDs on.");
 
-      if (expectedVirtualMove != "") {
-        show_move(expectedVirtualMove);
-      }
+  //     if (expectedVirtualMove != "") {
+  //       show_move(expectedVirtualMove);
+  //     }
 
-      return;
-    }
-  }
+  //     return;
+  //   }
+  // }
 }
-
-

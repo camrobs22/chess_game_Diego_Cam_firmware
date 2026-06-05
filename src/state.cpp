@@ -26,10 +26,10 @@ void IRAM_ATTR onTimer() {
 ChessPiece get_chess_piece_type(float voltage){
     // bunch of if statements for test voltages
     ChessPiece chesspiece;
-    if (voltage <= 1.35){
+    if (voltage <= 1.4){
         chesspiece.piecetype = BLACK;
     }
-    else if (voltage >= 1.65){
+    else if (voltage >= 1.8){
         chesspiece.piecetype = WHITE;
     }
     else{
