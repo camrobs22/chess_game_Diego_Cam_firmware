@@ -8,8 +8,8 @@ const char* SERVER_URL = "http://18.221.166.110:3000/api/test";
 const char* SERVER_IP = "18.221.166.110";
 const uint16_t SERVER_PORT = 3000;
 
-// Updated by the server's game:config message.
-char physicalPlayerColor = 'w';
+// physical player color
+char physicalPlayerColor = '?';
 
 WebSocketsClient webSocket;
 bool socketConnected = false;
@@ -27,8 +27,6 @@ String last_status_message = "";
 String last_rejected_move = "";
 String last_capture_move = "";
 
-// Used to avoid processing the same accepted move / game result twice when the
-// server sends both move:accepted and game:state for the same version.
 int lastHandledMoveVersion = -1;
 int lastHandledGameOverVersion = -1;
 
@@ -211,14 +209,51 @@ bool is_physical_source(const char* source) {
            strcmp(source, "physical") == 0;
 }
 
+bool is_opponent_source(const char* source) {
+    if (source == nullptr) {
+        return false;
+    }
+
+    return strcmp(source, "engine") == 0 ||
+           strcmp(source, "virtualboard") == 0;
+}
+
 bool is_physical_player_color(const char* color) {
     return color != nullptr &&
+           (physicalPlayerColor == 'w' || physicalPlayerColor == 'b') &&
            color[0] == physicalPlayerColor &&
            color[1] == '\0';
 }
 
+void update_physical_player_color(JsonDocument& doc, bool fromPhysicalBoard) {
+    JsonVariantConst acceptedMove = doc["acceptedMove"];
+    const char* color = acceptedMove["color"];
+    if (color == nullptr) {
+        color = doc["color"];
+    }
+
+    if (color == nullptr ||
+        (strcmp(color, "w") != 0 && strcmp(color, "b") != 0)) {
+        return;
+    }
+
+    char inferredColor = fromPhysicalBoard
+        ? color[0]
+        : (color[0] == 'w' ? 'b' : 'w');
+
+    if (physicalPlayerColor != inferredColor) {
+        physicalPlayerColor = inferredColor;
+        Serial.print("Physical player color inferred as ");
+        Serial.println(physicalPlayerColor == 'b' ? "black" : "white");
+    }
+}
+
 bool is_physical_move(JsonDocument& doc) {
     const char* source = doc["source"];
+    if (is_opponent_source(source)) {
+        return false;
+    }
+
     if (is_physical_source(source)) {
         return true;
     }
@@ -255,6 +290,10 @@ void queue_virtual_move(String move, bool wasCapture) {
 
 bool move_belongs_to_physical_player(JsonDocument& doc, JsonVariantConst moveObj) {
     const char* source = doc["source"];
+    if (is_opponent_source(source)) {
+        return false;
+    }
+
     if (is_physical_source(source)) {
         return true;
     }
@@ -318,12 +357,6 @@ void set_game_result_flags(bool isDrawResult, const char* winner, const char* re
         game_won = false;
         game_lost = true;
         game_draw = false;
-
-        // A legal chess move by the physical player cannot directly make the
-        // physical player lose by checkmate. If a loss result arrives before the
-        // opponent's final move message, do not allow main.cpp to play the loss
-        // animation while it is still waiting for that move.
-        game_result_needs_virtual_move_completion = true;
     }
 }
 
@@ -369,9 +402,9 @@ void handle_game_over_if_needed(JsonDocument& doc, int version) {
 
     set_game_result_flags(drawResult, winner, reason);
 
-    if (queuedFinalMove) {
-        game_result_needs_virtual_move_completion = true;
-    }
+    // wait to show the result if the opponent's move is not on the board yet
+    game_result_needs_virtual_move_completion =
+        queuedFinalMove || virtual_move != "";
 
     Serial.print("RX game over: ");
     Serial.print(statusName == nullptr ? "unknown" : statusName);
@@ -413,6 +446,7 @@ void handle_accepted_move(JsonDocument& doc) {
 
     bool wasCapture = root_was_capture(doc);
     bool fromPhysicalBoard = is_physical_move(doc);
+    update_physical_player_color(doc, fromPhysicalBoard);
 
     const char* source = doc["source"];
     Serial.print("RX accepted: ");
@@ -428,15 +462,11 @@ void handle_accepted_move(JsonDocument& doc) {
         lastHandledMoveVersion = version;
     }
 
-    // Only queue/display moves that still need to be physically made on the
-    // board. Physical-player moves are already on the board by the time the
-    // server accepts them.
+    // opponent move
     if (!fromPhysicalBoard) {
         queue_virtual_move(move, wasCapture);
     }
 
-    // Store game-over result flags, but do not play win/loss/draw animations
-    // here. main.cpp plays them at the correct physical-board moment.
     handle_game_over_if_needed(doc, version);
 }
 
@@ -623,7 +653,15 @@ void handle_server_message(uint8_t* payload, size_t length) {
         Serial.print(" opponent=");
         Serial.print(doc["opponent"] | "unknown");
         Serial.print(" physicalColor=");
-        Serial.println(physicalPlayerColor == 'b' ? "black" : "white");
+        if (physicalPlayerColor == 'b') {
+            Serial.println("black");
+        }
+        else if (physicalPlayerColor == 'w') {
+            Serial.println("white");
+        }
+        else {
+            Serial.println("unknown");
+        }
     }
     else if (strcmp(type, "error") == 0) {
         const char* message = doc["message"];

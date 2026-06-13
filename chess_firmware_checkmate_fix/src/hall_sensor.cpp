@@ -5,12 +5,12 @@ float get_average_hall_voltage(int pin){
   analogRead(pin);
 
   int total = 0;
-  for (int i = 0; i < 5; i++){
+  for (int i = 0; i < 3; i++){
     total += analogRead(pin);
     delayMicroseconds(20);
   }
 
-  float average = total / 5.0f;
+  float average = total / 3.0f;
   return average / 4095.0f * 3.3f;
 }
 
